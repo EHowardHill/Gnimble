@@ -1,1 +1,0 @@
-g++ -o notepad editor.cpp -lncurses
