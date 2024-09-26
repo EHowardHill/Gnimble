@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -lncurses
-TARGET = notepad
-SRC = notepad.cpp
+TARGET = gnotepad
+SRC = gnotepad.cpp
 
 all: $(TARGET)
 

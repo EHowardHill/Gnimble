@@ -85,7 +85,12 @@ private:
         clear();
 
         auto word_count = countWords(buffer);
-        mvprintw(max_y - 1, 0, "Ctrl+C to exit | Words: %d", word_count);
+        if (_argc == 1) {
+            mvprintw(max_y - 1, 0, "Ctrl+C to exit | output.txt | Words: %d", word_count);
+        } else {
+            mvprintw(max_y - 1, 0, "Ctrl+C to exit | %s | Words: %d", _argv[1], word_count);
+        }
+        
 
         int lines_to_display = max_y - 2;
         for (int i = 0; i < lines_to_display && view_start + i < buffer.size(); ++i)
