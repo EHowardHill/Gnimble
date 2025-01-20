@@ -15,7 +15,6 @@ ApplicationWindow {
         id: rowContainer
         width: parent.width
         height: 24
-        color: "black" // Set the background color to black
 
         Row {
             id: rowTitle
@@ -28,25 +27,18 @@ ApplicationWindow {
                 width: 48
                 height: 24
 
-                // Customize the Button's appearance
-                background: Rectangle {
-                    color: "black" // Button background
-                }
-
                 // Set the text color to white
                 contentItem: Text {
                     text: backButton.text
-                    color: "white"
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
                     anchors.centerIn: parent
                 }
             }
 
-            Label {
+            TextEdit {
                 id: labelTitle
                 text: "My Document"
-                color: "white" // Set text color to white
                 anchors.verticalCenter: parent.verticalCenter
                 horizontalAlignment: Text.AlignHCenter
                 width: parent.width - backButton.width - saveButton.width
@@ -58,15 +50,9 @@ ApplicationWindow {
                 width: 48
                 height: 24
 
-                // Customize the Button's appearance
-                background: Rectangle {
-                    color: "black" // Button background
-                }
-
                 // Set the text color to white
                 contentItem: Text {
                     text: saveButton.text
-                    color: "white"
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
                     anchors.centerIn: parent
@@ -80,66 +66,79 @@ ApplicationWindow {
     // 2) ToolBar
     // --------------------------------------------------
     ToolBar {
-    id: toolbarMain
-    anchors.top: rowContainer.bottom
-    width: parent.width
-    height: 40
+        id: toolbarMain
+        anchors.top: rowContainer.bottom
+        width: parent.width
+        height: 40
 
-        // Define a custom background using a Rectangle
-    background: Rectangle {
-        anchors.fill: parent
-        color: white
-    }
+        Row {
+            anchors.left: parent.left
 
-    Row {
-        anchors.left: parent.left
+            // Define the colors
 
-        Button {
-            text: "B"
-            font.bold: true
-            width: 40
-            height: 40 }
-        Button { text: "I"
-            font.italic: true
-            width: 40
-            height: 40 }
-        Button { text: "U"
-            font.underline: true
-            width: 40
-            height: 40 }
-    }
+            // Reusable styled Button component
+            Component {
+                id: styledButton
+                Button {
+                    width: 40
+                    height: 40
+                    checkable: true  // Makes the button selectable
 
-    Row {
-        anchors.right: parent.right
-        spacing: 10
-        anchors.verticalCenter: parent.verticalCenter // Center the entire row vertically in the toolbar
-
-        Rectangle {
-            width: labelCount.implicitWidth + 20
-            height: 32
-            radius: 4
-            anchors.verticalCenter: parent.verticalCenter // Center each rectangle vertically in the row
-
-            Label {
-                id: labelCount
-                anchors.centerIn: parent
-                text: "100 Words"
+                    // Optional: Customize the text color for better contrast
+                    contentItem: Text {
+                        text: control.text
+                        font.bold: control.font.bold
+                        font.italic: control.font.italic
+                        font.underline: control.font.underline
+                        anchors.centerIn: parent
+                    }
+                }
             }
+
+            Button {
+                text: "B"
+                font.bold: true
+                width: 40
+                height: 40
+                onClicked: backend.buttonPushed() }
+            Button { text: "I"
+                font.italic: true
+                width: 40
+                height: 40 }
+            Button { text: "U"
+                font.underline: true
+                width: 40
+                height: 40 }
         }
 
-        Rectangle {
-            width: labelBattery.implicitWidth + 20
-            height: 32
-            radius: 4
-            anchors.verticalCenter: parent.verticalCenter
+        Row {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter // Center the entire row vertically in the toolbar
 
-            Label {
-                id: labelBattery
-                anchors.centerIn: parent
-                text: "80%"
+            Rectangle {
+                width: labelCount.implicitWidth + 20
+                height: 32
+                anchors.verticalCenter: parent.verticalCenter // Center each rectangle vertically in the row
+
+                Label {
+                    id: labelCount
+                    anchors.centerIn: parent
+                    text: "100 Words"
+                }
+            }
+
+            Rectangle {
+                width: labelBattery.implicitWidth + 20
+                height: 32
+                anchors.verticalCenter: parent.verticalCenter
+
+                Label {
+                    id: labelBattery
+                    anchors.centerIn: parent
+                    text: "80%"
+                }
             }
         }
-    }
 
     }
 
@@ -153,26 +152,16 @@ ApplicationWindow {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
 
-TextArea {
-    wrapMode: TextEdit.Wrap
-    leftPadding: 100
-    rightPadding: 100
-    topPadding: 20
-    bottomPadding: 20
-    placeholderText: qsTr("It was a dark and stormy night...")
-
-    // Set the text color to white
-    color: "white"
-
-    // Define the background as a black rectangle
-    background: Rectangle {
-        color: "black"
-        radius: 5 // Optional: Adds rounded corners
-        // You can add borders or other styling here if desired
-    }
-
-    // Optional: Style the placeholder text
-    placeholderTextColor: "lightgray"
-}
+        TextArea {
+            id: textArea
+            objectName: "myTextArea"  // <--- give it an objectName for findChild
+            textFormat: TextEdit.RichText
+            wrapMode: TextEdit.Wrap
+            leftPadding: 100
+            rightPadding: 100
+            topPadding: 20
+            bottomPadding: 20
+            placeholderText: qsTr("It was a dark and stormy night...")
+        }
     }
 }

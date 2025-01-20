@@ -1,0 +1,131 @@
+<html>
+
+<head>
+    <!-- Include stylesheet -->
+    <link href="../static/quill.bubble.css" rel="stylesheet" />
+
+    <!-- Include the Quill library -->
+    <script src="../static/quill.js"></script>
+
+    <style>
+        @font-face {
+            font-family: "Sorts Mill Goudy";
+            src: url('../static/fonts/SortsMillGoudy-Regular.ttf');
+        }
+
+        body {
+            font-family: "Sorts Mill Goudy", serif !important;
+            font-weight: 400;
+            font-style: normal;
+            color: whitesmoke;
+
+            overflow: hidden;
+
+            background-image: url("../static/texture2.jpg");
+            background-position: center;
+            background-size: cover;
+        }
+
+        button {
+            font-family: "Sorts Mill Goudy", serif !important;
+            font-weight: 400;
+            font-style: bold;
+            font-size: large;
+
+            margin: 6px;
+            padding: 6px;
+            background-color: rgba(0, 0, 0, 0.5);
+            width: 128px;
+            color: whitesmoke;
+
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10 and IE 11 */
+            user-select: none; /* Standard syntax */
+        }
+
+        .editor {
+            font-family: 'Sorts Mill Goudy';
+            font-size: large;
+            flex: 2;
+
+            background: rgba(0, 0, 0, 0.74);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(4.4px);
+            -webkit-backdrop-filter: blur(4.4px);
+            border: 1px solid rgba(255, 255, 255, 0.66);
+            color: whitesmoke;
+        }
+
+        .titlebar {
+            height: 100%;
+            flex: 1;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cascade {
+            font-size: xx-large;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+
+            margin: 6px;
+            padding: 6px;
+        }
+
+        .container {
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+        }
+
+        ::-webkit-scrollbar {
+            width: 20px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #2f5f70;
+            border-radius: 20px;
+            border: 6px solid transparent;
+            background-clip: content-box;
+        }
+    </style>
+
+</head>
+
+
+<body>
+    <div class="container">
+        <div class="titlebar">
+            <div style="width: 100%;">
+                <div class="cascade">My Document</div>
+                <div style="flex: 1;"></div>
+            </div>
+
+            <div style="flex: 1;"></div>
+
+            <button>Menu</button>
+            <button>Save</button>
+            <button>Information</button>
+        </div>
+        <div id="editor" class="editor">
+            <p>Hello, <strong>World</strong></p>
+        </div>
+        <div class="titlebar">
+
+        </div>
+    </div>
+
+    <!-- Initialize Quill editor -->
+    <script>
+        const quill = new Quill('#editor', {
+            theme: 'bubble',
+        });
+    </script>
+</body>
+
+</html>
