@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <title>{{title}}</title>
+
+    <link href="../static/styles.css" rel="stylesheet">
+
+</head>
+
+<body>
+    <div hidden id="ref">{{ ref }}</div>
+
+    <div class="container">
+        <div class="titlebar">
+            <div style="width: 100%;">
+                <div id="title" class="cascade">Gnimble</div>
+                <div style="flex: 1;"></div>
+            </div>
+        </div>
+        <div class="editor" style="overflow-y: auto; display: flex; flex-wrap: wrap;">
+            {% for story in stories %}
+            <button onclick="go(`{{story['ref']}}`)" class="long">{{ story["title"] }}</button>
+            {% endfor %}
+        </div>
+        <div class="titlebar">
+            <div style="flex: 1;"></div>
+
+            <button>New Story</button>
+            <button>Settings</button>
+            <button>Synchronize</button>
+        </div>
+    </div>
+
+    <script>
+        function go(ref) {
+            window.location.href = "/edit?ref=" + ref;
+        }
+    </script>
+</body>
+
+</html>
