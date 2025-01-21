@@ -39,11 +39,34 @@ button {
     color: whitesmoke;
 
     -webkit-user-select: none;
-    /* Safari */
     -ms-user-select: none;
-    /* IE 10 and IE 11 */
     user-select: none;
-    /* Standard syntax */
+}
+
+input {
+    background-color: black;
+    border: whitesmoke;
+    border-style: groove;
+    color: white;
+    font-size: larger;
+    padding: 4px;
+
+    font-family: "Sorts Mill Goudy", serif !important;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100vw;
+    height: 100vh;
+
+    background-color: rgba(0, 0, 0, 0.74);
+    backdrop-filter: blur(10px);
+    z-index: 101;
+
+    display: flex;
+    flex-direction: column;
 }
 
 .poked {

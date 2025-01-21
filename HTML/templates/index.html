@@ -1,21 +1,36 @@
 <html>
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>{{title}}</title>
 
     <!-- Include stylesheet -->
-    <link href="../static/quill.bubble.css" rel="stylesheet" />
+    <link href="{{ url_for('static', filename = 'quill.bubble.css') }}" rel="stylesheet" />
 
     <!-- Include the Quill library -->
-    <script src="../static/quill.js"></script>
+    <script src="{{ url_for('static', filename = 'quill.js') }}"></script>
 
-    <link href="../static/styles.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename = 'styles.css') }}" rel="stylesheet">
 
 </head>
 
 
 <body>
     <div hidden id="ref">{{ ref }}</div>
+
+    <div id="popup" class="overlay" style="display: none;">
+        <div style="flex: 1;"> </div>
+        <center>
+            <div id="information" style="display: none;">
+                <p id="word-count">Words: 100</p>
+                <input id="new-title" type="text" value="{{title}}">
+                <button onclick="rename()">Rename</button>
+                <button onclick="popdown()">Return</button>
+            </div>
+        </center>
+        <div style="flex: 1;"> </div>
+    </div>
 
     <div class="container">
         <div class="titlebar">
@@ -31,15 +46,60 @@
             <div style="flex: 1;"></div>
 
             <button id="btnSave" onclick="save()">Save</button>
-            <button>Information</button>
+            <button onclick="popup('information');">Information</button>
             <button onclick="save(); window.location.href='/';">Return</button>
         </div>
     </div>
 
-    <!-- Initialize Quill editor -->
     <script>
+        async function rename() {
+            const response = await fetch("/rename", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: "{{ ref }}",
+                    title: document.getElementById("new-title").value
+                })
+            }).then((response) => response.json()).then((data) => {
+                if (data["success"] == 1) {
+                    location.reload();
+                }
+            });
+        }
+
+        function countVisibleWords() {
+            const editor = document.getElementById('editor');            
+            const text = editor.innerText || '';
+            const words = text.trim().match(/\b\w+\b/g);
+            return words ? words.length : 0;
+        }
+
+        function popup(element) {
+            document.getElementById('word-count').textContent = "Words: " + countVisibleWords().toString();
+
+            document.getElementById("popup").style.display = "flex";
+            document.getElementById(element).style.display = "block";
+        }
+
+        function popdown() {
+            document.getElementById("popup").style.display = "none";
+            document.getElementById("information").style.display = "none";
+        }
+
+        const toolbarOptions = [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+            [{ 'align': [] }],
+        ];
+
         const quill = new Quill('#editor', {
-            theme: 'bubble',
+            modules: {
+                toolbar: toolbarOptions
+            },
+            theme: 'bubble'
         });
 
         function poke() {
