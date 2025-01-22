@@ -13,6 +13,25 @@
 
     <link href="{{ url_for('static', filename = 'styles.css') }}" rel="stylesheet">
 
+    <style>
+        body {
+            font-family: "Sorts Mill Goudy", serif !important;
+            font-weight: 400;
+            font-style: normal;
+            color: whitesmoke;
+
+            margin: 0; /* Removes default margins */
+            height: 100vh; /* Ensures body takes full viewport height */
+            box-shadow: inset 0 0 64px 64px rgba(0, 0, 0, 0.5); /* Adjust values as needed */
+
+            overflow: hidden;
+
+            background-image: url("../static/tmp/{{bg}}");
+            background-position: center;
+            background-size: cover;
+        }
+    </style>
+
 </head>
 
 
@@ -29,8 +48,58 @@
                 <button onclick="popdown()">Return</button>
             </div>
         </center>
-        <div style="flex: 1;"> </div>
+        <div style="flex: 1;">
+        </div>
+        <div>
+            <center>
+                <button id="delete1" onclick="delete1();" style="background-color: rgba(255, 0, 0, 0.5);">Delete Story</button>
+                <button id="delete2" onclick="delete2();" style="background-color: rgba(255, 0, 0, 1); display: none;">I'm sure I want to delete this story</button>
+            </center>
+        </div>
     </div>
+
+    <script>
+        async function print() {
+            save();
+
+            const response = await fetch("/print", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: "{{ ref }}"
+                })
+            }).then((response) => response.json()).then((data) => {
+                if (data["success"] == 1) {
+                    window.open('../static/output.pdf', '_blank').focus();
+                }
+            });
+        }
+
+        function delete1() {
+            document.getElementById("delete1").style.display = "none";
+            document.getElementById("delete2").style.display = "block";
+        }
+
+        async function delete2() {
+            const response = await fetch("/delete", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: "{{ ref }}"
+                })
+            }).then((response) => response.json()).then((data) => {
+                if (data["success"] == 1) {
+                    window.location.href='/';
+                }
+            });
+        }
+    </script>
 
     <div class="container">
         <div class="titlebar">
@@ -47,6 +116,9 @@
 
             <button id="btnSave" onclick="save()">Save</button>
             <button onclick="popup('information');">Information</button>
+            {% if local == False %}
+            <button onclick="print()">Download PDF</button>
+            {% endif %}
             <button onclick="save(); window.location.href='/';">Return</button>
         </div>
     </div>
