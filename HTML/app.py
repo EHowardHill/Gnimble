@@ -149,7 +149,7 @@ def save():
     data = {
         "ref": ref,
         "title": title,
-        "content": content
+        "content": """<link href="../static/quill.bubble.css" rel="stylesheet" />""" + content
     }
 
     with open(path.join("stories", ref + ".json"), "w") as f:

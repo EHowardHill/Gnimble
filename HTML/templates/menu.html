@@ -54,6 +54,7 @@
                 <button onclick="popdown()">Return</button>
             </div>
             <div id="settings" style="display: none;">
+                {% if local == "Y" %}
                 <p>Wi-Fi: <span id="wifi-banner"></span></p>
                 <div style="height: 320px; overflow-y: scroll;" id="wifi-list">
 
@@ -63,7 +64,7 @@
                     <input id="wifi-password" type="text" placeholder="Password" value="">
                     <button onclick="connectWifi()">Connect</button>
                 </div>
-                {% if local == "N" %}
+                {% else %}
                 <label for="wallpaper">Upload a new wallpaper:</label>
                 <br>
                 <!-- The form below posts to /upload -->
@@ -138,6 +139,7 @@
         }
 
         async function popup(element) {
+            {% if local == "Y" %}
             document.getElementById("wifi-password").value = "";
             document.getElementById("wifi-password-div").style.display = "none";
 
@@ -162,6 +164,7 @@
                     wifiList.innerHTML += `<button onclick='queueWifi("${net[0]}")' style="width: 50%">${net[0]}</button>`;
                 }
             });
+            {% endif %}
 
             document.getElementById("popup").style.display = "flex";
             document.getElementById(element).style.display = "block";
