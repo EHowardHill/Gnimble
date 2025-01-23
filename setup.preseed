@@ -67,8 +67,8 @@ d-i finish-install/reboot_in_progress note
 
 ### Late Command
 d-i preseed/late_command string \
-    in-target wget https://cinemint.online/static/gnimble/gnimble-utils_1.0.0_all.deb -P /tmp; \
-    in-target dpkg -i /tmp/gnimble-utils_1.0.0_all.deb; \
+    in-target wget https://cinemint.online/static/gnimble/gnimble-utils_latest_all.deb -P /tmp; \
+    in-target dpkg -i /tmp/gnimble-utils_latest_all.deb; \
     in-target mkdir -p /etc/systemd/system/getty@tty1.service.d; \
     in-target bash -c 'echo "[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin user --noclear %I \$TERM\n" > /etc/systemd/system/getty@tty1.service.d/override.conf'; \
     in-target bash -c 'echo "if [ -z \$DISPLAY ] && [ \$(tty) = /dev/tty1 ]; then\n  startx\nfi" >> /home/user/.profile'; \
