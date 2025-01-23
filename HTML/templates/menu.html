@@ -16,9 +16,12 @@
             font-style: normal;
             color: whitesmoke;
 
-            margin: 0; /* Removes default margins */
-            height: 100vh; /* Ensures body takes full viewport height */
-            box-shadow: inset 0 0 64px 64px rgba(0, 0, 0, 0.5); /* Adjust values as needed */
+            margin: 0;
+            /* Removes default margins */
+            height: 100vh;
+            /* Ensures body takes full viewport height */
+            box-shadow: inset 0 0 64px 64px rgba(0, 0, 0, 0.5);
+            /* Adjust values as needed */
 
             overflow: hidden;
 
@@ -46,14 +49,21 @@
                 <p><strong>To connect to your Gnimble device:</strong></p>
                 <p>1. Make sure both devices are on the same Wi-Fi network.</p>
                 <p>2. Open a web browser, and visit the address below:</p>
-                <h1>http://{{ip}}</h1>
+                <h1>http://{{ip}}:5000</h1>
                 <div id="qrcode"></div>
                 <button onclick="popdown()">Return</button>
             </div>
             <div id="settings" style="display: none;">
-                {% if local %}
-                <p>Wi-Fi: Connected</p>
-                {% else %}
+                <p>Wi-Fi: <span id="wifi-banner"></span></p>
+                <div style="height: 320px; overflow-y: scroll;" id="wifi-list">
+
+                </div>
+                <div id="wifi-password-div" style="display: none;">
+                    <div id="wifi-label" style="font-weight: bold;"></div>
+                    <input id="wifi-password" type="text" placeholder="Password" value="">
+                    <button onclick="connectWifi()">Connect</button>
+                </div>
+                {% if local == "N" %}
                 <label for="wallpaper">Upload a new wallpaper:</label>
                 <br>
                 <!-- The form below posts to /upload -->
@@ -91,12 +101,70 @@
     </div>
 
     <script>
-        function popup(element) {
+        let networks = [];
+
+        async function connectWifi(net=document.getElementById("wifi-label").textContent) {
+            const response = await fetch("/wifi-connect", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ssid: net,
+                    password: document.getElementById("wifi-password").value
+                })
+            }).then((response) => response.json()).then((data) => {
+                popup("settings");
+            });
+        }
+
+        function queueWifi(net) {
+            let myNetwork = [];
+
+            networks.forEach((entry) => {
+                console.log(entry[0]);
+                if (entry[0] == net) {
+                    console.log("FOUND!");
+                    console.log(entry[1]);
+                    if (entry[1] == '') {
+                        connectWifi(net);
+                    } else {
+                        document.getElementById("wifi-label").textContent = entry[0];
+                        document.getElementById("wifi-password-div").style.display = "block";
+                    }
+                }
+            });
+        }
+
+        async function popup(element) {
+            document.getElementById("wifi-password").value = "";
+            document.getElementById("wifi-password-div").style.display = "none";
+
+            // Take care of Wi-Fi listing
+            const response = await fetch("/wifi-list", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then((response) => response.json()).then((data) => {
+                networks = data["networks"];
+                console.log(networks);
+
+                document.getElementById("wifi-banner").innerText = data["current"];
+
+                const wifiList = document.getElementById("wifi-list");
+                wifiList.innerHTML = ""; // Clear existing items
+
+                for (const net of networks) {
+                    // Build up a string of HTML
+                    wifiList.innerHTML += `<button onclick='queueWifi("${net[0]}")' style="width: 50%">${net[0]}</button>`;
+                }
+            });
+
             document.getElementById("popup").style.display = "flex";
             document.getElementById(element).style.display = "block";
-
-            localStorage.clear();
-            sessionStorage.clear();
         }
 
         function popdown() {
@@ -110,7 +178,7 @@
             window.location.href = "/edit?ref=" + ref;
         }
 
-        let code = new QRCode(document.getElementById("qrcode"), "http://{{ip}}");
+        let code = new QRCode(document.getElementById("qrcode"), "http://{{ip}}:5000");
 
         async function create() {
             const response = await fetch("/create", {

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 from werkzeug.utils import secure_filename
-from os import path, listdir, remove, add_dll_directory
+from os import path, listdir, remove
 from json import load, dump
 import subprocess
 import socket
@@ -8,6 +8,7 @@ from PIL import Image
 import platform
 
 if platform.system() == "Windows":
+    from os import add_dll_directory
     add_dll_directory(r"C:\Program Files\GTK3-Runtime Win64\bin")
 
 import weasyprint
@@ -15,25 +16,31 @@ import weasyprint
 UPLOAD_FOLDER = 'static'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-def get_wifi_ssids():
+def list_wifi_networks():
     try:
-        # Run the 'nmcli' command to list available Wi-Fi networks
-        result = subprocess.run(['nmcli', '-t', '-f', 'SSID', 'dev', 'wifi'], 
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(
+            ["nmcli", "-t", "-f", "SSID,SECURITY", "dev", "wifi", "list"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+    except:
+        print("Error")
 
-        # Check if the command was successful
-        if result.returncode != 0:
-            print("Error retrieving Wi-Fi SSIDs:")
-            print(result.stderr)
-            return []
+    networks = []
+    lines = result.stdout.strip().split("\n")
+    for line in lines:
+        # Each line is something like "MyWiFiSSID:WPA2"
+        parts = line.split(":", 1)
+        if len(parts) == 2:
+            ssid, security = parts
+            # Exclude hidden SSIDs or blank lines
+            if ssid.strip():
+                if [ssid.strip(), security.strip()] not in networks:
+                    networks.append([ssid.strip(), security.strip()])
 
-        # Parse the output
-        ssids = set(line.strip() for line in result.stdout.splitlines() if line.strip())
-        return sorted(ssids)
-
-    except FileNotFoundError:
-        print("Error: 'nmcli' command not found. Please install NetworkManager.")
-        return []
+    print(networks)
+    return networks
 
 def get_intranet_ip():
     """Gets the IP address of the current machine on the intranet."""
@@ -58,8 +65,8 @@ def allowed_file(filename):
 @app.route('/')
 def menu():
 
-    print(request.remote_addr)
-    local = True if request.remote_addr == "127.0.0.1" else False
+    print([request.remote_addr, IPAddr])
+    local = "Y" if request.remote_addr == '127.0.0.1' else "N"
 
     stories = []
     for link in listdir("stories"):
@@ -70,12 +77,13 @@ def menu():
 
     bg = listdir(path.join("static", "tmp"))[0]
     
-    return render_template('menu.html', stories=stories, ip=IPAddr, bg=bg, local=True if local is not None else False)
+    return render_template('menu.html', stories=stories, ip=IPAddr, bg=bg, local=local)
 
 @app.route('/edit')
 def edit():
 
-    local = True if request.remote_addr == "127.0.0.1" else False
+    print([request.remote_addr, IPAddr])
+    local = "Y" if request.remote_addr == '127.0.0.1' else "N"
 
     ref = request.args.get("ref")
     with open(path.join("stories", ref + ".json"), "r") as f:
@@ -85,7 +93,7 @@ def edit():
 
     bg = listdir(path.join("static", "tmp"))[0]
 
-    return render_template('index.html', title=title, content=content, ref=ref, bg=bg, local=True if local is not None else False)
+    return render_template('index.html', title=title, content=content, ref=ref, bg=bg, local=local)
 
 @app.route('/rename', methods=["POST"])
 def rename():
@@ -173,4 +181,47 @@ def print_document():
     open(path.join("static", 'output.pdf'), 'wb').write(pdf)
     return {
         "success": 1
+    }
+
+@app.route('/wifi-list', methods=['POST'])
+def wifi_list():
+    result = subprocess.run(["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],
+                capture_output=True,
+            text=True,
+            check=True)
+    output = result.stdout.strip().split("\n")
+
+    current = "Not Connected"
+    for c in output:
+        print(c)
+        if "yes:" in c:
+            current = c.replace("yes:", "")
+
+    return {
+        "success": 1,
+        "current": current,
+        "networks": list_wifi_networks()
+    }
+
+@app.route('/wifi-connect', methods=['POST'])
+def wifi_connect():
+    ssid = request.json.get("ssid")
+    password = request.json.get("password")
+    print(["Trying: ", ssid, password])
+
+    cmd = ["sudo", "/home/user/wifi/connect.sh", ssid]
+    if password != "":
+        cmd.append(password)
+
+    try:
+        subprocess.run(cmd, check=True)
+        return {
+            "success": 1
+        }
+    
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to connect to '{ssid}'.\nError: {e}")
+
+    return {
+        "success": 0
     }
