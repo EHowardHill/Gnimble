@@ -209,7 +209,7 @@ def wifi_connect():
     password = request.json.get("password")
     print(["Trying: ", ssid, password])
 
-    cmd = ["sudo", "/home/user/wifi/connect.sh", ssid]
+    cmd = ["sudo", "/etc/gnimble/wifi/connect.sh", ssid]
     if password != "":
         cmd.append(password)
 

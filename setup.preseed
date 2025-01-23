@@ -1,0 +1,76 @@
+### Localization
+d-i debian-installer/language string en
+d-i debian-installer/country string US
+d-i debian-installer/locale string en_US.UTF-8
+
+### Keyboard
+d-i keyboard-configuration/xkb-keymap select us
+d-i keyboard-configuration/layoutcode string us
+
+### Network
+d-i netcfg/choose_interface select auto
+d-i netcfg/get_hostname string gnimble
+d-i netcfg/get_domain string localdomain
+
+### Timezone
+d-i time/zone string America/Chicago
+
+### Mirror Settings
+d-i mirror/country string manual
+d-i mirror/http/hostname string deb.debian.org
+d-i mirror/http/directory string /debian
+d-i mirror/http/proxy string
+d-i apt-setup/non-free-firmware boolean true
+d-i apt-setup/non-free boolean true
+d-i apt-setup/contrib boolean true
+
+### Partitioning - Use entire disk (atomic)
+d-i partman-auto/method string regular
+d-i partman-auto/choose_recipe select atomic
+d-i partman-auto/confirm boolean true
+d-i partman/choose_partition select finish
+d-i partman/confirm_write_new_label boolean true
+d-i partman/confirm_nooverwrite boolean true
+d-i partman/confirm boolean true
+
+### No root password - sudo user only
+d-i passwd/root-login boolean false
+d-i passwd/make-user boolean true
+
+### Single user account
+d-i passwd/user-fullname string user
+d-i passwd/username string user
+d-i passwd/user-password password chronos
+d-i passwd/user-password-again password chronos
+d-i user-setup/allow-password-weak boolean true
+d-i user-setup/encrypt-home boolean false
+
+### Automatic Login
+d-i passwd/auto-login boolean true
+
+### Package Selection
+# Installs the "standard" set only — no desktop environment.
+tasksel tasksel/first multiselect standard
+
+# Additional packages needed for kiosk usage
+d-i pkgsel/include string \
+    xserver-xorg xinit firefox-esr python3 python3-pip
+
+# Don’t prompt about popularity contest
+popularity-contest popularity-contest/participate boolean false
+
+### Finishing Up
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/with_other_os boolean true
+d-i grub-installer/bootdev string /dev/sda
+d-i finish-install/reboot_in_progress note
+
+### Late Command
+d-i preseed/late_command string \
+    in-target wget https://cinemint.online/static/gnimble/gnimble-utils_1.0.0_all.deb -P /tmp; \
+    in-target dpkg -i /tmp/gnimble-utils_1.0.0_all.deb; \
+    in-target mkdir -p /etc/systemd/system/getty@tty1.service.d; \
+    in-target bash -c 'echo "[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin user --noclear %I \$TERM\n" > /etc/systemd/system/getty@tty1.service.d/override.conf'; \
+    in-target bash -c 'echo "if [ -z \$DISPLAY ] && [ \$(tty) = /dev/tty1 ]; then\n  startx\nfi" >> /home/user/.profile'; \
+    in-target bash -c 'echo "exec firefox-esr --kiosk 127.0.0.1:5000" > /home/user/.xinitrc'; \
+    in-target chown user:user /home/user/.profile /home/user/.xinitrc

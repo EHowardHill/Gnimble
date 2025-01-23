@@ -1,0 +1,6 @@
+Package: gnimble-utils
+Version: 1.0.0
+Architecture: all
+Maintainer: Ethan Hill <ethan.hill1999@outlook.com>
+Depends: python3, python3-pip
+Description: Gnimble device utilities
