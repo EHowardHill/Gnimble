@@ -116,7 +116,7 @@
 
             <button id="btnSave" onclick="save()">Save</button>
             <button onclick="popup('information');">Information</button>
-            {% if local == False %}
+            {% if local == "N" %}
             <button onclick="print()">Download PDF</button>
             {% endif %}
             <button onclick="save(); window.location.href='/';">Return</button>
@@ -163,6 +163,7 @@
 
         const toolbarOptions = [
             ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote', 'code-block'],
             [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
             [{ 'align': [] }],
         ];
