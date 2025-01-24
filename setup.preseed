@@ -54,7 +54,7 @@ tasksel tasksel/first multiselect standard
 
 # Additional packages needed for kiosk usage
 d-i pkgsel/include string \
-    xserver-xorg xinit firefox-esr python3 python3-pip
+    xserver-xorg xinit firefox-esr python3 python3-pip matchbox-window-manager
 
 # Don’t prompt about popularity contest
 popularity-contest popularity-contest/participate boolean false
@@ -70,7 +70,13 @@ d-i preseed/late_command string \
     in-target wget https://cinemint.online/static/gnimble/gnimble-utils_latest_all.deb -P /tmp; \
     in-target dpkg -i /tmp/gnimble-utils_latest_all.deb; \
     in-target mkdir -p /etc/systemd/system/getty@tty1.service.d; \
-    in-target bash -c 'echo "[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin user --noclear %I \$TERM\n" > /etc/systemd/system/getty@tty1.service.d/override.conf'; \
-    in-target bash -c 'echo "if [ -z \$DISPLAY ] && [ \$(tty) = /dev/tty1 ]; then\n  startx\nfi" >> /home/user/.profile'; \
-    in-target bash -c 'echo "exec firefox-esr --kiosk 127.0.0.1:5000" > /home/user/.xinitrc'; \
-    in-target chown user:user /home/user/.profile /home/user/.xinitrc
+    in-target bash -c "echo -e \"[Service]\\nExecStart=\\nExecStart=-/sbin/agetty --autologin user --noclear %I \\$TERM\" > /etc/systemd/system/getty@tty1.service.d/override.conf"; \
+    in-target bash -c "echo -e \"\\nstartx\" >> /home/user/.profile"; \
+    in-target bash -c "echo -e \"matchbox-window-manager &\\nexec firefox-esr --kiosk 127.0.0.1:5000\" > /home/user/.xinitrc"; \
+    in-target chown user:user /home/user/.profile /home/user/.xinitrc; \
+    in-target sed -i 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/' /etc/default/grub ; \
+    in-target sed -i 's/^#GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/' /etc/default/grub ; \
+    in-target sed -i 's/^GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=hidden/' /etc/default/grub ; \
+    in-target sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/' /etc/default/grub ; \
+    in-target export PATH=$PATH:/usr/sbin ; \
+    in-target update-grub

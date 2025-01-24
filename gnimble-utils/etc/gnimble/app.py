@@ -52,8 +52,6 @@ def get_intranet_ip():
         return ip_address
     except Exception:
         return None
-    
-IPAddr = get_intranet_ip()
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -64,6 +62,7 @@ def allowed_file(filename):
 
 @app.route('/')
 def menu():
+    IPAddr = get_intranet_ip()
 
     print([request.remote_addr, IPAddr])
     local = "Y" if request.remote_addr == '127.0.0.1' else "N"

@@ -116,7 +116,7 @@
                     password: document.getElementById("wifi-password").value
                 })
             }).then((response) => response.json()).then((data) => {
-                popup("settings");
+                window.location.reload();
             });
         }
 
