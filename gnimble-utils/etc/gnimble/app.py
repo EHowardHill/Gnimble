@@ -95,12 +95,13 @@ def edit():
 
 @app.route('/rename', methods=["POST"])
 def rename():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-
+    if request.remote_addr != '127.0.0.1':
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {
+                "success": 401
+            }
+        
     ref = request.json.get("ref")
     title = request.json.get("title")
 
@@ -118,12 +119,13 @@ def rename():
 
 @app.route('/delete', methods=["POST"])
 def delete():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-    
+    if request.remote_addr != '127.0.0.1':
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {
+                "success": 401
+            }
+        
     ref = request.json.get("ref")
     remove(path.join("stories", ref + ".json"))
 
@@ -133,12 +135,13 @@ def delete():
 
 @app.route('/create', methods=["POST"])
 def create():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-
+    if request.remote_addr != '127.0.0.1':
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {
+                "success": 401
+            }
+        
     title = request.json.get("title")
 
     ref = title.replace(" ","-").lower().strip()
@@ -158,12 +161,13 @@ def create():
 
 @app.route('/save', methods=["POST"])
 def save():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-
+    if request.remote_addr != '127.0.0.1':
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {
+                "success": 401
+            }
+        
     ref = request.json.get("ref")
     title = request.json.get("title")
     content = request.json.get("content")
@@ -183,12 +187,6 @@ def save():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-
     file = request.files['file']
 
     if file:
@@ -202,12 +200,13 @@ def upload_file():
 
 @app.route('/print', methods=['POST'])
 def print_document():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-
+    if request.remote_addr != '127.0.0.1':
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {
+                "success": 401
+            }
+        
     sleep(1)
     ref = request.json.get("ref")
     with open(path.join("stories", ref + ".json"), "r") as f:
@@ -224,12 +223,13 @@ def print_document():
 
 @app.route('/docx', methods=['POST'])
 def print_docx():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-
+    if request.remote_addr != '127.0.0.1':
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {
+                "success": 401
+            }
+        
     sleep(1)
     ref = request.json.get("ref")
     with open(path.join("stories", ref + ".json"), "r") as f:
@@ -247,12 +247,13 @@ def print_docx():
 
 @app.route('/text', methods=['POST'])
 def print_text():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-
+    if request.remote_addr != '127.0.0.1':
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {
+                "success": 401
+            }
+        
     sleep(1)
     ref = request.json.get("ref")
     with open(path.join("stories", ref + ".json"), "r") as f:
@@ -269,12 +270,6 @@ def print_text():
 
 @app.route('/wifi-list', methods=['POST'])
 def wifi_list():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-
     result = subprocess.run(["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],
                 capture_output=True,
             text=True,
@@ -295,12 +290,13 @@ def wifi_list():
 
 @app.route('/wifi-connect', methods=['POST'])
 def wifi_connect():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
-
+    if request.remote_addr != '127.0.0.1':
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {
+                "success": 401
+            }
+        
     ssid = request.json.get("ssid")
     password = request.json.get("password")
     print(["Trying: ", ssid, password])
@@ -324,11 +320,12 @@ def wifi_connect():
 
 @app.route('/password', methods=['POST'])
 def password():
-    serial = request.json.get("serial")
-    if serial != serial_number:
-        return {
-            "success": 401
-        }
+    if request.remote_addr != '127.0.0.1':
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {
+                "success": 401
+            }
 
     s = request.json.get("serial")
     print([s, serial_number])
