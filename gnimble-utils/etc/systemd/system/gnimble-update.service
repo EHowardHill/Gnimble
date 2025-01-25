@@ -1,13 +1,13 @@
 [Unit]
-Description=Gnimble Server Service
+Description=Gnimble Update Service
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-Type=simple
+Type=oneshot
 WorkingDirectory=/etc/gnimble
-ExecStart=/usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
-Restart=always
+ExecStart=/etc/gnimble/wifi/update.sh
+RemainAfterExit=true
 
 [Install]
 WantedBy=multi-user.target
