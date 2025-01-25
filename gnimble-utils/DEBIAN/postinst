@@ -2,7 +2,7 @@
 
 # - Handle dependencies
 
-python3 -m pip install weasyprint flask pillow gunicorn --break-system-packages
+python3 -m pip install weasyprint flask pillow gunicorn htmldocx html2text --break-system-packages
 
 # - Manage wifi selection settings
 

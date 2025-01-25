@@ -36,6 +36,79 @@
 <body>
     <div hidden id="ref">{{ ref }}</div>
 
+    {% if local == "N" %}
+    <div id="password-popup" class="overlay" style="display: none;">
+        <div style="flex: 1;"> </div>
+        <center>
+            <p>Enter password to continue</p>
+            <div>
+                <input id="password" type="text">
+                <button onclick="password_check(false)">Submit</button>
+            </div>
+        </center>
+        <div style="flex: 1;"> </div>
+    </div>
+
+    <script>
+        let password = "";
+
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + value + expires + "; path=/";
+        }
+
+        // Get a cookie
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(";");
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === " ") c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        async function password_check(cookie = false) {
+            let p = document.getElementById("password").value;
+            if (cookie) {
+                p = getCookie("password");
+            }
+
+            const response = await fetch("/password", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    serial: p
+                })
+            }).then((response) => response.json()).then((data) => {
+                if (data["success"] == 1) {
+                    document.getElementById("password-popup").style.display = "none";
+                    if (!cookie) {
+                        setCookie("password", document.getElementById("password").value, 30);
+                    }
+                } else {
+                    document.getElementById("password-popup").style.display = "flex";
+                }
+            });
+        }
+
+        password_check(true);
+    </script>
+    {% else %}
+    <script>
+        let password = "{{ serial }}";
+    </script>
+    {% endif %}
+
     <div id="popup" class="overlay" style="display: none;">
         <div style="flex: 1;"> </div>
         <center>
@@ -50,6 +123,8 @@
                 <p>1. Make sure both devices are on the same Wi-Fi network.</p>
                 <p>2. Open a web browser, and visit the address below:</p>
                 <h1>http://{{ip}}:5000</h1>
+                <p>3. Enter your password:</p>
+                <h2>{{ serial }}</h2>
                 <div id="qrcode"></div>
                 <button onclick="popdown()">Return</button>
             </div>
@@ -113,7 +188,8 @@
                 },
                 body: JSON.stringify({
                     ssid: net,
-                    password: document.getElementById("wifi-password").value
+                    password: document.getElementById("wifi-password").value,
+                    serial: "{{serial}}"
                 })
             }).then((response) => response.json()).then((data) => {
                 window.location.reload();
@@ -192,10 +268,13 @@
                 },
                 body: JSON.stringify({
                     title: document.getElementById("input-title").value,
+                    serial: "{{serial}}"
                 })
             }).then((response) => response.json()).then((data) => {
                 if (data["success"] == 1) {
                     location.reload();
+                } else if (data["success"] == 401) {
+                    document.getElementById("password-popup").style.display = "flex";
                 }
             });
         }

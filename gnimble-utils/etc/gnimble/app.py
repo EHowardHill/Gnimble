@@ -1,17 +1,17 @@
+from docx import Document
 from flask import Flask, render_template, request, redirect, url_for
-from werkzeug.utils import secure_filename
+from htmldocx import HtmlToDocx
+from json import load, loads, dump
 from os import path, listdir, remove
-from json import load, dump
-import subprocess
+from time import sleep
+from werkzeug.utils import secure_filename
+import html2text
+import random
 import socket
-from PIL import Image
-import platform
-
-if platform.system() == "Windows":
-    from os import add_dll_directory
-    add_dll_directory(r"C:\Program Files\GTK3-Runtime Win64\bin")
-
+import subprocess
 import weasyprint
+
+serial_number = str(random.randint(10000000, 99999999))
 
 UPLOAD_FOLDER = 'static'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -76,12 +76,11 @@ def menu():
 
     bg = listdir(path.join("static", "tmp"))[0]
     
-    return render_template('menu.html', stories=stories, ip=IPAddr, bg=bg, local=local)
+    return render_template('menu.html', stories=stories, ip=IPAddr, bg=bg, local=local, serial=serial_number)
 
 @app.route('/edit')
 def edit():
 
-    print([request.remote_addr, IPAddr])
     local = "Y" if request.remote_addr == '127.0.0.1' else "N"
 
     ref = request.args.get("ref")
@@ -96,6 +95,12 @@ def edit():
 
 @app.route('/rename', methods=["POST"])
 def rename():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
     ref = request.json.get("ref")
     title = request.json.get("title")
 
@@ -113,6 +118,12 @@ def rename():
 
 @app.route('/delete', methods=["POST"])
 def delete():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+    
     ref = request.json.get("ref")
     remove(path.join("stories", ref + ".json"))
 
@@ -122,6 +133,12 @@ def delete():
 
 @app.route('/create', methods=["POST"])
 def create():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
     title = request.json.get("title")
 
     ref = title.replace(" ","-").lower().strip()
@@ -141,6 +158,12 @@ def create():
 
 @app.route('/save', methods=["POST"])
 def save():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
     ref = request.json.get("ref")
     title = request.json.get("title")
     content = request.json.get("content")
@@ -148,7 +171,7 @@ def save():
     data = {
         "ref": ref,
         "title": title,
-        "content": """<link href="../static/quill.bubble.css" rel="stylesheet" />""" + content
+        "content": content
     }
 
     with open(path.join("stories", ref + ".json"), "w") as f:
@@ -160,6 +183,12 @@ def save():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
     file = request.files['file']
 
     if file:
@@ -173,17 +202,79 @@ def upload_file():
 
 @app.route('/print', methods=['POST'])
 def print_document():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
+    sleep(1)
+    ref = request.json.get("ref")
+    with open(path.join("stories", ref + ".json"), "r") as f:
+        fd = f.read()
+        print("vvv" + fd)
+        data = loads(fd)
+
+    content = """<link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet"><div class="ql-editor">""" + data["content"] + """</div>"""
+    pdf = weasyprint.HTML(string=content).write_pdf()
+    open(path.join("static", 'output.pdf'), 'wb').write(pdf)
+    return {
+        "success": 1
+    }
+
+@app.route('/docx', methods=['POST'])
+def print_docx():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
+    sleep(1)
     ref = request.json.get("ref")
     with open(path.join("stories", ref + ".json"), "r") as f:
         data = load(f)
-    pdf = weasyprint.HTML(string=data["content"]).write_pdf()
-    open(path.join("static", 'output.pdf'), 'wb').write(pdf)
+    content = """<link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet"><div class="ql-editor">""" + data["content"] + """</div>"""
+
+    document = Document()
+    new_parser = HtmlToDocx()
+    new_parser.add_html_to_document(content, document)
+    document.save(path.join("static", "output.docx"))
+
+    return {
+        "success": 1
+    }
+
+@app.route('/text', methods=['POST'])
+def print_text():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
+    sleep(1)
+    ref = request.json.get("ref")
+    with open(path.join("stories", ref + ".json"), "r") as f:
+        data = load(f)
+    
+    content = html2text.html2text(data["content"])
+
+    with open(path.join("static", "output.txt"), "w") as f:
+        f.write(content)
+
     return {
         "success": 1
     }
 
 @app.route('/wifi-list', methods=['POST'])
 def wifi_list():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
     result = subprocess.run(["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],
                 capture_output=True,
             text=True,
@@ -204,6 +295,12 @@ def wifi_list():
 
 @app.route('/wifi-connect', methods=['POST'])
 def wifi_connect():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
     ssid = request.json.get("ssid")
     password = request.json.get("password")
     print(["Trying: ", ssid, password])
@@ -223,4 +320,19 @@ def wifi_connect():
 
     return {
         "success": 0
+    }
+
+@app.route('/password', methods=['POST'])
+def password():
+    serial = request.json.get("serial")
+    if serial != serial_number:
+        return {
+            "success": 401
+        }
+
+    s = request.json.get("serial")
+    print([s, serial_number])
+
+    return {
+        "success": 1 if s == serial_number else 0
     }

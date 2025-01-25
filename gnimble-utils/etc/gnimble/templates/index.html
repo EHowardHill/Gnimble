@@ -20,9 +20,12 @@
             font-style: normal;
             color: whitesmoke;
 
-            margin: 0; /* Removes default margins */
-            height: 100vh; /* Ensures body takes full viewport height */
-            box-shadow: inset 0 0 64px 64px rgba(0, 0, 0, 0.5); /* Adjust values as needed */
+            margin: 0;
+            /* Removes default margins */
+            height: 100vh;
+            /* Ensures body takes full viewport height */
+            box-shadow: inset 0 0 64px 64px rgba(0, 0, 0, 0.5);
+            /* Adjust values as needed */
 
             overflow: hidden;
 
@@ -31,12 +34,83 @@
             background-size: cover;
         }
     </style>
-
 </head>
-
 
 <body>
     <div hidden id="ref">{{ ref }}</div>
+
+    {% if local == "N" %}
+    <div id="password-popup" class="overlay" style="display: none;">
+        <div style="flex: 1;"> </div>
+        <center>
+            <p>Enter password to continue</p>
+            <div>
+                <input id="password" type="text">
+                <button onclick="password_check(false)">Submit</button>
+            </div>
+        </center>
+        <div style="flex: 1;"> </div>
+    </div>
+
+    <script>
+        let password = "";
+
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + value + expires + "; path=/";
+        }
+
+        // Get a cookie
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(";");
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === " ") c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        async function password_check(cookie = false) {
+            let p = document.getElementById("password").value;
+            if (cookie) {
+                p = getCookie("password");
+            }
+
+            const response = await fetch("/password", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    serial: p
+                })
+            }).then((response) => response.json()).then((data) => {
+                if (data["success"] == 1) {
+                    document.getElementById("password-popup").style.display = "none";
+                    if (!cookie) {
+                        setCookie("password", document.getElementById("password").value, 30);
+                    }
+                } else {
+                    document.getElementById("password-popup").style.display = "flex";
+                }
+            });
+        }
+
+        password_check(true);
+    </script>
+    {% else %}
+    <script>
+        let password = "{{ serial }}";
+    </script>
+    {% endif %}
 
     <div id="popup" class="overlay" style="display: none;">
         <div style="flex: 1;"> </div>
@@ -52,16 +126,17 @@
         </div>
         <div>
             <center>
-                <button id="delete1" onclick="delete1();" style="background-color: rgba(255, 0, 0, 0.5);">Delete Story</button>
-                <button id="delete2" onclick="delete2();" style="background-color: rgba(255, 0, 0, 1); display: none;">I'm sure I want to delete this story</button>
+                <button id="delete1" onclick="delete1();" style="background-color: rgba(255, 0, 0, 0.5);">Delete
+                    Story</button>
+                <button id="delete2" onclick="delete2();"
+                    style="background-color: rgba(255, 0, 0, 1); display: none;">I'm sure I want to delete this
+                    story</button>
             </center>
         </div>
     </div>
 
     <script>
         async function print() {
-            save();
-
             const response = await fetch("/print", {
                 method: 'POST',
                 headers: {
@@ -69,11 +144,56 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    ref: "{{ ref }}"
+                    ref: "{{ ref }}",
+                    serial: password
                 })
             }).then((response) => response.json()).then((data) => {
                 if (data["success"] == 1) {
                     window.open('../static/output.pdf', '_blank').focus();
+                } else if (data["success"] == 401) {
+                    document.getElementById("password-popup").style.display = "flex";
+                }
+            });
+        }
+
+        async function print_docx() {
+            save();
+            const response = await fetch("/docx", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: "{{ ref }}",
+                    serial: password
+                })
+            }).then((response) => response.json()).then((data) => {
+                if (data["success"] == 1) {
+                    window.open('../static/output.docx', '_blank').focus();
+                } else if (data["success"] == 401) {
+                    document.getElementById("password-popup").style.display = "flex";
+                }
+            });
+        }
+
+        async function print_text() {
+            save();
+            const response = await fetch("/text", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: "{{ ref }}",
+                    serial: password
+                })
+            }).then((response) => response.json()).then((data) => {
+                if (data["success"] == 1) {
+                    window.open('../static/output.txt', '_blank').focus();
+                } else if (data["success"] == 401) {
+                    document.getElementById("password-popup").style.display = "flex";
                 }
             });
         }
@@ -91,11 +211,14 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    ref: "{{ ref }}"
+                    ref: "{{ ref }}",
+                    serial: password
                 })
             }).then((response) => response.json()).then((data) => {
                 if (data["success"] == 1) {
-                    window.location.href='/';
+                    window.location.href = '/';
+                } else if (data["success"] == 401) {
+                    document.getElementById("password-popup").style.display = "flex";
                 }
             });
         }
@@ -112,13 +235,19 @@
             {{ content|safe }}
         </div>
         <div class="titlebar">
-            <div style="flex: 1;"></div>
 
+            {% if local == "N" %}
+            <div style="padding: 12px;">
+                Download
+            </div>
+            <button onclick="print()">PDF</button>
+            <button onclick="print_docx()">Word Document</button>
+            <button onclick="print_text()">Raw Text</button>
+            {% endif %}
+
+            <div style="flex: 1;"></div>
             <button id="btnSave" onclick="save()">Save</button>
             <button onclick="popup('information');">Information</button>
-            {% if local == "N" %}
-            <button onclick="print()">Download PDF</button>
-            {% endif %}
             <button onclick="save(); window.location.href='/';">Return</button>
         </div>
     </div>
@@ -133,17 +262,20 @@
                 },
                 body: JSON.stringify({
                     ref: "{{ ref }}",
-                    title: document.getElementById("new-title").value
+                    title: document.getElementById("new-title").value,
+                    serial: password
                 })
             }).then((response) => response.json()).then((data) => {
                 if (data["success"] == 1) {
                     location.reload();
+                } else if (data["success"] == 401) {
+                    document.getElementById("password-popup").style.display = "flex";
                 }
             });
         }
 
         function countVisibleWords() {
-            const editor = document.getElementById('editor');            
+            const editor = document.getElementById('editor');
             const text = editor.innerText || '';
             const words = text.trim().match(/\b\w+\b/g);
             return words ? words.length : 0;
@@ -189,11 +321,14 @@
                 body: JSON.stringify({
                     ref: document.getElementById("ref").textContent,
                     title: document.getElementById("title").textContent,
-                    content: document.getElementsByClassName("ql-editor")[0].innerHTML
+                    content: document.getElementsByClassName("ql-editor")[0].innerHTML,
+                    serial: password
                 })
             }).then((response) => response.json()).then((data) => {
                 if (data["success"] == 1) {
                     document.getElementById("btnSave").classList.remove("poked");
+                } else if (data["success"] == 401) {
+                    document.getElementById("password-popup").style.display = "flex";
                 }
             });
         }
