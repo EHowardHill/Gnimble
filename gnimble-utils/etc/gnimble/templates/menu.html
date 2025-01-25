@@ -91,11 +91,9 @@
                 })
             }).then((response) => response.json()).then((data) => {
                 if (data["success"] == 1) {
-                    password = document.getElementById("password").value;
+                    password = p;
                     document.getElementById("password-popup").style.display = "none";
-                    if (!cookie) {
-                        setCookie("password", document.getElementById("password").value, 30);
-                    }
+                    setCookie("password", p, 30);
                 } else {
                     document.getElementById("password-popup").style.display = "flex";
                 }
@@ -120,6 +118,7 @@
                 <button onclick="popdown()">Return</button>
             </div>
             <div id="sync" style="display: none;">
+                {% if local == "Y" %}
                 <p><strong>To connect to your Gnimble device:</strong></p>
                 <p>1. Make sure both devices are on the same Wi-Fi network.</p>
                 <p>2. Open a web browser, and visit the address below:</p>
@@ -128,6 +127,7 @@
                 <h2>{{ serial }}</h2>
                 <div id="qrcode"></div>
                 <button onclick="popdown()">Return</button>
+                {% endif %}
             </div>
             <div id="settings" style="display: none;">
                 {% if local == "Y" %}
@@ -173,7 +173,10 @@
 
             <button onclick="popup('new-story')">New Story</button>
             <button onclick="popup('settings')">Settings</button>
+
+            {% if local == "Y" %}
             <button onclick="popup('sync')">Synchronize</button>
+            {% endif %}
         </div>
     </div>
 

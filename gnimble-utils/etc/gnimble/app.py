@@ -151,7 +151,9 @@ def create():
         
     title = request.json.get("title")
 
-    ref = title.replace(" ","-").lower().strip()
+    ref = str(random.randint(0, 9999))
+    while path.exists(path.join("stories", ref + ".json")):
+        ref = str(random.randint(0, 9999))
 
     data = {
         "ref": ref,
