@@ -91,6 +91,7 @@
                 })
             }).then((response) => response.json()).then((data) => {
                 if (data["success"] == 1) {
+                    password = document.getElementById("password").value;
                     document.getElementById("password-popup").style.display = "none";
                     if (!cookie) {
                         setCookie("password", document.getElementById("password").value, 30);

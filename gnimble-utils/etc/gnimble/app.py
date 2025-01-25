@@ -11,7 +11,14 @@ import socket
 import subprocess
 import weasyprint
 
-serial_number = str(random.randint(10000000, 99999999))
+serial_number = ""
+if not path.exists("/tmp/key"):
+    serial_number = str(random.randint(10000000, 99999999))
+    with open("/tmp/key", "w") as f:
+        f.write(serial_number)
+else:
+    with open("/tmp/key", "r") as f:
+        serial_number = f.read()
 
 UPLOAD_FOLDER = 'static'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
