@@ -1,3 +1,4 @@
+from datetime import datetime
 from docx import Document
 from flask import Flask, render_template, request, redirect, url_for
 from htmldocx import HtmlToDocx
@@ -6,6 +7,7 @@ from os import path, listdir, remove
 from time import sleep
 from werkzeug.utils import secure_filename
 import html2text
+import psutil
 import random
 import socket
 import subprocess
@@ -67,6 +69,22 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route('/get_time', methods=['POST'])
+def get_time():
+    return {
+        "success": 1,
+        "time": datetime.now().strftime("%H:%M:%S %p")
+    }
+
+@app.route('/get_battery', methods=['POST'])
+def get_battery():
+    battery = psutil.sensors_battery()
+    percent = str(battery.percent)
+    return {
+        "success": 1,
+        "battery": percent + '%'
+    }
+
 @app.route('/')
 def menu():
     IPAddr = get_intranet_ip()
@@ -82,8 +100,19 @@ def menu():
             stories.append({"ref": data["ref"], "title": data["title"]})
 
     bg = listdir(path.join("static", "tmp"))[0]
+
+    time = get_time()["time"]
+    battery = get_battery()["battery"]
     
-    return render_template('menu.html', stories=stories, ip=IPAddr, bg=bg, local=local, serial=serial_number)
+    return render_template(
+        'menu.html',
+        stories=stories,
+        ip=IPAddr,
+        bg=bg,
+        local=local,
+        serial=serial_number,
+        battery=battery,
+        time=time)
 
 @app.route('/edit')
 def edit():

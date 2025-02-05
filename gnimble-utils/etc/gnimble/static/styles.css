@@ -52,6 +52,10 @@ input {
     flex-direction: column;
 }
 
+.z-102 {
+    z-index: 102;
+}
+
 .poked {
     background-color: rgba(0, 128, 255, 0.5) !important;
 }

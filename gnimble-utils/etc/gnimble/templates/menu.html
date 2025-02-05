@@ -36,6 +36,14 @@
 <body>
     <div hidden id="ref">{{ ref }}</div>
 
+    <div id="loading-popup" class="overlay" style="display: none;">
+        <div style="flex: 1;"> </div>
+        <center>
+            <img src="static/loading-book.gif"
+        </center>
+        <div style="flex: 1;"> </div>
+    </div>
+
     {% if local == "N" %}
     <div id="password-popup" class="overlay" style="display: none;">
         <div style="flex: 1;"> </div>
@@ -75,7 +83,9 @@
         }
 
         async function password_check(cookie = false) {
+            document.getElementById("loading-popup").style.display = "flex";
             let p = document.getElementById("password").value;
+
             if (cookie) {
                 p = getCookie("password");
             }
@@ -97,6 +107,8 @@
                 } else {
                     document.getElementById("password-popup").style.display = "flex";
                 }
+
+                document.getElementById("loading-popup").style.display = "none";
             });
         }
 
@@ -176,6 +188,12 @@
 
             {% if local == "Y" %}
             <button onclick="popup('sync')">Synchronize</button>
+
+            <div style="display: flex;">
+                <img src="static/icon-battery.png">
+                <div id="battery">{{ battery }}</div>
+                <div id="time">{{ time }}</div>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -219,7 +237,9 @@
         }
 
         async function popup(element) {
+
             {% if local == "Y" %}
+            document.getElementById("loading-popup").style.display = "flex";
             document.getElementById("wifi-password").value = "";
             document.getElementById("wifi-password-div").style.display = "none";
 
@@ -243,6 +263,8 @@
                     // Build up a string of HTML
                     wifiList.innerHTML += `<button onclick='queueWifi("${net[0]}")' style="width: 50%">${net[0]}</button>`;
                 }
+
+                document.getElementById("loading-popup").style.display = "none";
             });
             {% endif %}
 
@@ -258,8 +280,35 @@
         }
 
         function go(ref) {
+            document.getElementById("loading-popup").style.display = "flex";
             window.location.href = "/edit?ref=" + ref;
         }
+
+        function updateStats() {
+            // TIME
+            await fetch("/get_time", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then((response) => response.json()).then((data) => {
+                document.getElementById("time").innerText = data["time"];
+            });
+
+            // BATTERY
+            await fetch("/get_battery", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then((response) => response.json()).then((data) => {
+                document.getElementById("battery").innerText = data["battery"];
+            });
+        }
+
+        setInterval(updateStats, 60000);
 
         let code = new QRCode(document.getElementById("qrcode"), "http://{{ip}}:5000");
 
@@ -282,7 +331,31 @@
                 }
             });
         }
-    </script>
+
+        // Take care of Wi-Fi listing
+        const response = await fetch("/wifi-list", {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        }).then((response) => response.json()).then((data) => {
+            networks = data["networks"];
+            console.log(networks);
+
+            document.getElementById("wifi-banner").innerText = data["current"];
+
+            const wifiList = document.getElementById("wifi-list");
+            wifiList.innerHTML = ""; // Clear existing items
+
+            for (const net of networks) {
+                // Build up a string of HTML
+                wifiList.innerHTML += `<button onclick='queueWifi("${net[0]}")' style="width: 50%">${net[0]}</button>`;
+            }
+
+            document.getElementById("loading-popup").style.display = "none";
+        });
+</script>
 </body>
 
 </html>
