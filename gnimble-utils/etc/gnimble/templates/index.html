@@ -24,7 +24,7 @@
             /* Removes default margins */
             height: 100vh;
             /* Ensures body takes full viewport height */
-            box-shadow: inset 0 0 64px 64px rgba(0, 0, 0, 0.5);
+            box-shadow: inset 0 0 128px 128px rgba(0, 0, 0, 0.5);
             /* Adjust values as needed */
 
             overflow: hidden;
@@ -224,9 +224,9 @@
     </script>
 
     <div class="container">
-        <div class="titlebar">
+        <div class="titlebar vertical-disappear">
             <div style="width: 100%;">
-                <div id="title" class="cascade">{{ title }}</div>
+                <div id="title" class="cascade cozy">{{ title }}</div>
                 <div style="flex: 1;"></div>
             </div>
         </div>
@@ -250,6 +250,8 @@
             <button onclick="save(); window.location.href='/';">Return</button>
         </div>
     </div>
+
+    <!-- -->
 
     <script>
         async function rename() {

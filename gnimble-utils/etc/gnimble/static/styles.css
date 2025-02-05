@@ -7,23 +7,46 @@ html {
     background-color: black;
 }
 
-button {
-    font-family: "Sorts Mill Goudy", serif !important;
-    font-weight: 400;
-    font-style: bold;
-    font-size: large;
-    z-index: 100;
+@media (orientation: landscape) {
+    button {
+        font-family: "Sorts Mill Goudy", serif !important;
+        font-weight: 400;
+        font-style: bold;
+        font-size: large;
+        z-index: 100;
+    
+        margin: 6px;
+        margin-bottom: 0px;
+        padding: 6px;
+        background-color: rgba(0, 0, 0, 0.5);
+        width: 128px;
+        color: whitesmoke;
+    
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+}
 
-    margin: 6px;
-    margin-bottom: 0px;
-    padding: 6px;
-    background-color: rgba(0, 0, 0, 0.5);
-    width: 128px;
-    color: whitesmoke;
-
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+@media (orientation: portrait) {
+    button {
+        font-family: "Sorts Mill Goudy", serif !important;
+        font-weight: 400;
+        font-style: bold;
+        font-size: large;
+        z-index: 100;
+        height: 64px;
+    
+        margin: 6px;
+        margin-right: 0px;
+        padding: 6px;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: whitesmoke;
+    
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
 }
 
 input {
@@ -68,38 +91,78 @@ input {
     z-index: 99;
 
     background: rgba(0, 0, 0, 0.74);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 64px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(4.4px);
     -webkit-backdrop-filter: blur(4.4px);
     border: 1px solid rgba(255, 255, 255, 0.66);
     color: whitesmoke;
 }
 
-.titlebar {
-    height: 100%;
-    flex: 1;
+@media (orientation: landscape) {
+    .titlebar {
+        height: 100%;
+        flex: 1;
 
-    display: flex;
-    flex-direction: column;
+        display: flex;
+        flex-direction: column;
+    }
 }
 
-.cascade {
-    font-size: xx-large;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+@media (orientation: portrait) {
+    .titlebar {
+        width: 100%;
 
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+        display: flex;
+        flex-direction: row;
+    }
+}
 
+.cozy {
     margin: 6px;
     padding: 6px;
 }
 
-.container {
-    height: 100%;
-    display: flex;
-    flex-direction: row;
+@media (orientation: landscape) {
+    .cascade {
+        font-size: xx-large;
+
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+}
+
+@media (orientation: portrait) {
+    .vertical-disappear {
+        display: none;
+    }
+}
+
+@media (orientation: portrait) {
+    .cascade {
+        font-size: xx-large;
+
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+}
+
+@media (orientation: landscape) {
+    .container {
+        height: 100%;
+        display: flex;
+        flex-direction: row;
+    }
+}
+
+@media (orientation: portrait) {
+    .container {
+        height: 100%;
+        overflow-y: scroll;
+        display: flex;
+        flex-direction: column-reverse;
+    }
 }
 
 .long {

@@ -20,7 +20,7 @@
             /* Removes default margins */
             height: 100vh;
             /* Ensures body takes full viewport height */
-            box-shadow: inset 0 0 64px 64px rgba(0, 0, 0, 0.5);
+            box-shadow: inset 0 0 128px 128px rgba(0, 0, 0, 0.5);
             /* Adjust values as needed */
 
             overflow: hidden;
@@ -39,8 +39,7 @@
     <div id="loading-popup" class="overlay" style="display: none;">
         <div style="flex: 1;"> </div>
         <center>
-            <img src="static/loading-book.gif"
-        </center>
+            <img src="static/loading-book.gif"> </center>
         <div style="flex: 1;"> </div>
     </div>
 
@@ -148,7 +147,6 @@
 
                 </div>
                 <div id="wifi-password-div" style="display: none;">
-                    <div id="wifi-label" style="font-weight: bold;"></div>
                     <input id="wifi-password" type="text" placeholder="Password" value="">
                     <button onclick="connectWifi()">Connect</button>
                 </div>
@@ -169,11 +167,11 @@
     </div>
 
     <div class="container">
-        <div class="titlebar">
-            <div style="width: 100%;">
-                <div id="title" class="cascade">Gnimble</div>
-                <div style="flex: 1;"></div>
-            </div>
+        <div class="titlebar vertical-disappear">
+            <div class="cozy"><img width="256px" src="static/gnimble-logo.png" /></div>
+            <div class="cozy" id="wifi-label" style="font-weight: bold;">{{ wifi }}</div>
+            <div class="cozy" id="battery">{{ battery }}</div>
+            <div class="cozy" id="time">{{ time }}</div>
         </div>
         <div class="editor" style="overflow-y: auto; display: flex; flex-wrap: wrap;">
             {% for story in stories %}
@@ -181,19 +179,13 @@
             {% endfor %}
         </div>
         <div class="titlebar">
-            <div style="flex: 1;"></div>
+            <div style="flex: 1;"> </div>
 
             <button onclick="popup('new-story')">New Story</button>
             <button onclick="popup('settings')">Settings</button>
 
             {% if local == "Y" %}
             <button onclick="popup('sync')">Synchronize</button>
-
-            <div style="display: flex;">
-                <img src="static/icon-battery.png">
-                <div id="battery">{{ battery }}</div>
-                <div id="time">{{ time }}</div>
-            </div>
             {% endif %}
         </div>
     </div>
@@ -201,7 +193,7 @@
     <script>
         let networks = [];
 
-        async function connectWifi(net=document.getElementById("wifi-label").textContent) {
+        async function connectWifi(net = document.getElementById("wifi-label").textContent) {
             const response = await fetch("/wifi-connect", {
                 method: 'POST',
                 headers: {
@@ -234,6 +226,11 @@
                     }
                 }
             });
+        }
+
+        function go(ref) {
+            document.getElementById("loading-popup").style.display = "flex";
+            window.location.href = "/edit?ref=" + ref;
         }
 
         async function popup(element) {
@@ -279,14 +276,9 @@
             document.getElementById("settings").style.display = "none";
         }
 
-        function go(ref) {
-            document.getElementById("loading-popup").style.display = "flex";
-            window.location.href = "/edit?ref=" + ref;
-        }
-
-        function updateStats() {
+        async function updateStats() {
             // TIME
-            await fetch("/get_time", {
+            const t = await fetch("/get_time", {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -297,7 +289,7 @@
             });
 
             // BATTERY
-            await fetch("/get_battery", {
+            const b = await fetch("/get_battery", {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -308,7 +300,9 @@
             });
         }
 
-        setInterval(updateStats, 60000);
+        setInterval(async () => {
+            updateStats();
+        }, 60000);
 
         let code = new QRCode(document.getElementById("qrcode"), "http://{{ip}}:5000");
 
@@ -333,29 +327,33 @@
         }
 
         // Take care of Wi-Fi listing
-        const response = await fetch("/wifi-list", {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        }).then((response) => response.json()).then((data) => {
-            networks = data["networks"];
-            console.log(networks);
+        async function wifiFetch() {
+            const response = await fetch("/wifi-list", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then((response) => response.json()).then((data) => {
+                networks = data["networks"];
+                console.log(networks);
 
-            document.getElementById("wifi-banner").innerText = data["current"];
+                document.getElementById("wifi-banner").innerText = data["current"];
 
-            const wifiList = document.getElementById("wifi-list");
-            wifiList.innerHTML = ""; // Clear existing items
+                const wifiList = document.getElementById("wifi-list");
+                wifiList.innerHTML = ""; // Clear existing items
 
-            for (const net of networks) {
-                // Build up a string of HTML
-                wifiList.innerHTML += `<button onclick='queueWifi("${net[0]}")' style="width: 50%">${net[0]}</button>`;
-            }
+                for (const net of networks) {
+                    // Build up a string of HTML
+                    wifiList.innerHTML += `<button onclick='queueWifi("${net[0]}")' style="width: 50%">${net[0]}</button>`;
+                }
 
-            document.getElementById("loading-popup").style.display = "none";
-        });
-</script>
+                document.getElementById("loading-popup").style.display = "none";
+            });
+        }
+
+        wifiFetch();
+    </script>
 </body>
 
 </html>

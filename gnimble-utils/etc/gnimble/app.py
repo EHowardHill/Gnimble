@@ -3,7 +3,7 @@ from docx import Document
 from flask import Flask, render_template, request, redirect, url_for
 from htmldocx import HtmlToDocx
 from json import load, loads, dump
-from os import path, listdir, remove
+from os import path, listdir, remove, system
 from time import sleep
 from werkzeug.utils import secure_filename
 import html2text
@@ -73,17 +73,23 @@ def allowed_file(filename):
 def get_time():
     return {
         "success": 1,
-        "time": datetime.now().strftime("%H:%M:%S %p")
+        "time": datetime.now().strftime("%I:%M %p")
     }
 
 @app.route('/get_battery', methods=['POST'])
 def get_battery():
     battery = psutil.sensors_battery()
-    percent = str(battery.percent)
-    return {
-        "success": 1,
-        "battery": percent + '%'
-    }
+    if battery is not None:
+        percent = str(battery.percent)
+        return {
+            "success": 1,
+            "battery": percent + '%'
+        }
+    else:
+        return {
+            "success": 1,
+            "battery": "No Battery"
+        }
 
 @app.route('/')
 def menu():
@@ -104,6 +110,10 @@ def menu():
     time = get_time()["time"]
     battery = get_battery()["battery"]
     
+    wifi = system("nmcli -t -f active,ssid dev wifi")
+    if str(wifi) == "0":
+        wifi = "No Internet"
+    
     return render_template(
         'menu.html',
         stories=stories,
@@ -112,7 +122,8 @@ def menu():
         local=local,
         serial=serial_number,
         battery=battery,
-        time=time)
+        time=time,
+        wifi=wifi)
 
 @app.route('/edit')
 def edit():
