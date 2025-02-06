@@ -1,35 +1,43 @@
 #!/bin/bash
 
-#  Write a bash script that will remap a Debian 12 instance running Xorg. The following keys must be altered to perform the following functions:
+#
+# 1. Remap certain function keys with xmodmap
+#
+xmodmap -e "keycode 67 = XF86Back"      # F1 -> Back
+xmodmap -e "keycode 68 = XF86Forward"   # F2 -> Forward
+xmodmap -e "keycode 69 = XF86Refresh"   # F3 -> Refresh
+# ...
+# Confirm these codes for your actual F8, F9, F10, F11:
+xmodmap -e "keycode 73 = Home"          # F7 or F8
+xmodmap -e "keycode 74 = Prior"         # F8 or F9
+xmodmap -e "keycode 75 = Next"          # F9 or F10
+xmodmap -e "keycode 76 = End"           # F10 or F11
+# (Adjust if necessary!)
 
-# F1: Back key (browser)
-# F2: Forward key (browser)
-# F3: Refresh key (browser)
-# F6: lower brightness
-# F7: raise brightness
-# F8: Home key
-# F9: Page Down
-# F10: Page Up
-# F11: End key
-
-# Remap keys using xmodmap
-xmodmap -e "keycode 67 = XF86Back"      # F1 -> Back key (browser)
-xmodmap -e "keycode 68 = XF86Forward"   # F2 -> Forward key (browser)
-xmodmap -e "keycode 69 = XF86Refresh"   # F3 -> Refresh key (browser)
-xmodmap -e "keycode 73 = Home"          # F8 -> Home key
-xmodmap -e "keycode 74 = Prior"         # F9 -> Page Down
-xmodmap -e "keycode 75 = Next"          # F10 -> Page Up
-xmodmap -e "keycode 76 = End"           # F11 -> End key
-
-# Brightness
-xbindkeys -e "F6"  'xdotool key XF86MonBrightnessDown'
-xbindkeys -e "F7"  'xdotool key XF86MonBrightnessUp'
-
-# Disable Caps Lock (turn it off temporarily)
+#
+# 2. Disable caps lock
+#
 setxkbmap -option caps:none
 
-# Bind Caps Lock to simulate "Ctrl+F"
-xbindkeys -e "Caps_Lock" 'xdotool key ctrl+f'
+#
+# 3. Write or update your ~/.xbindkeysrc with brightness + Caps Lock binding
+#
+cat <<EOF > ~/.xbindkeysrc
+# Press F6 to simulate brightness down
+"xdotool key XF86MonBrightnessDown"
+    F6
 
-# Reload xbindkeys (if using it to manage key bindings for actions like brightness)
-pkill xbindkeys && xbindkeys &
+# Press F7 to simulate brightness up
+"xdotool key XF86MonBrightnessUp"
+    F7
+
+# Caps Lock as Ctrl+F
+"xdotool key ctrl+f"
+    Caps_Lock
+EOF
+
+#
+# 4. Restart xbindkeys so the new bindings take effect
+#
+pkill xbindkeys
+xbindkeys

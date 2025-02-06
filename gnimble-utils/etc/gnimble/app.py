@@ -80,7 +80,7 @@ def get_time():
 def get_battery():
     battery = psutil.sensors_battery()
     if battery is not None:
-        percent = str(battery.percent)
+        percent = str(int(battery.percent))
         return {
             "success": 1,
             "battery": percent + '%'
@@ -110,9 +110,19 @@ def menu():
     time = get_time()["time"]
     battery = get_battery()["battery"]
     
-    wifi = system("nmcli -t -f active,ssid dev wifi")
+    result = subprocess.run(
+        "nmcli -t -f active,ssid dev wifi | grep yes:",
+        shell=True,
+        capture_output=True,  # Alternatively: stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        text=True           # Alternatively: universal_newlines=True
+    )
+
+    wifi = result.stdout.strip()
+
     if str(wifi) == "0":
         wifi = "No Internet"
+    else:
+        wifi = wifi.replace("yes:", "")
     
     return render_template(
         'menu.html',

@@ -169,9 +169,9 @@
     <div class="container">
         <div class="titlebar vertical-disappear">
             <div class="cozy"><img width="256px" src="static/gnimble-logo.png" /></div>
-            <div class="cozy" id="wifi-label" style="font-weight: bold;">{{ wifi }}</div>
-            <div class="cozy" id="battery">{{ battery }}</div>
-            <div class="cozy" id="time">{{ time }}</div>
+            <div class="cozy" id="wifi-label" style="font-weight: bold; font-size: large;">{{ wifi }}</div>
+            <div class="cozy" id="battery" style="font-weight: bold; font-size: large;">{{ battery }}</div>
+            <div class="cozy" id="time" style="font-weight: bold; font-size: large;">{{ time }}</div>
         </div>
         <div class="editor" style="overflow-y: auto; display: flex; flex-wrap: wrap;">
             {% for story in stories %}
