@@ -1,43 +1,35 @@
 #!/bin/bash
 
-#
-# 1. Remap certain function keys with xmodmap
-#
-xmodmap -e "keycode 67 = XF86Back"      # F1 -> Back
-xmodmap -e "keycode 68 = XF86Forward"   # F2 -> Forward
-xmodmap -e "keycode 69 = XF86Refresh"   # F3 -> Refresh
-# ...
-# Confirm these codes for your actual F8, F9, F10, F11:
-xmodmap -e "keycode 73 = Home"          # F7 or F8
-xmodmap -e "keycode 74 = Prior"         # F8 or F9
-xmodmap -e "keycode 75 = Next"          # F9 or F10
-xmodmap -e "keycode 76 = End"           # F10 or F11
-# (Adjust if necessary!)
+# 59 -> Home (KEY_HOME = 102)
+sudo setkeycodes 59 102
 
-#
-# 2. Disable caps lock
-#
-setxkbmap -option caps:none
+# 60 -> End (KEY_END = 107)
+sudo setkeycodes 60 107
 
-#
-# 3. Write or update your ~/.xbindkeysrc with brightness + Caps Lock binding
-#
-cat <<EOF > ~/.xbindkeysrc
-# Press F6 to simulate brightness down
-"xdotool key XF86MonBrightnessDown"
-    F6
+# 61 -> F5 (KEY_F5 = 63)
+sudo setkeycodes 61 63
 
-# Press F7 to simulate brightness up
-"xdotool key XF86MonBrightnessUp"
-    F7
+# 62 -> Disabled (KEY_RESERVED = 0)
+sudo setkeycodes 62 0
 
-# Caps Lock as Ctrl+F
-"xdotool key ctrl+f"
-    Caps_Lock
-EOF
+# 63 -> Disabled (KEY_RESERVED = 0)
+sudo setkeycodes 63 0
 
-#
-# 4. Restart xbindkeys so the new bindings take effect
-#
-pkill xbindkeys
-xbindkeys
+# 64 -> Brightness Down (KEY_BRIGHTNESSDOWN = 224)
+sudo setkeycodes 64 224
+
+# 65 -> Brightness Up (KEY_BRIGHTNESSUP = 225)
+sudo setkeycodes 65 225
+
+# 66 -> Disabled (KEY_RESERVED = 0)
+sudo setkeycodes 66 0
+
+# 67 -> Disabled (KEY_RESERVED = 0)
+sudo setkeycodes 67 0
+
+# 68 -> Disabled (KEY_RESERVED = 0)
+sudo setkeycodes 68 0
+
+matchbox-window-manager &
+sleep 2
+exec chromium --kiosk 127.0.0.1:5000

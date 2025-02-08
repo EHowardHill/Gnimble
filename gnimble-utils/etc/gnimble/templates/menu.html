@@ -39,7 +39,8 @@
     <div id="loading-popup" class="overlay" style="display: none;">
         <div style="flex: 1;"> </div>
         <center>
-            <img src="static/loading-book.gif"> </center>
+            <img src="static/loading-book.gif">
+        </center>
         <div style="flex: 1;"> </div>
     </div>
 
@@ -353,6 +354,16 @@
         }
 
         wifiFetch();
+
+        window.addEventListener("pageshow", function (event) {
+            var historyTraversal = event.persisted ||
+                (typeof window.performance != "undefined" &&
+                    window.performance.navigation.type === 2);
+            if (historyTraversal) {
+                // Handle page restore.
+                window.location.reload();
+            }
+        });
     </script>
 </body>
 
