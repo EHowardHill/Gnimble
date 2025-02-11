@@ -148,7 +148,23 @@ def edit():
 
     bg = listdir(path.join("static", "tmp"))[0]
 
-    return render_template('index.html', title=title, content=content, ref=ref, bg=bg, local=local)
+    result = subprocess.run(
+        "nmcli -t -f active,ssid dev wifi | grep yes:",
+        shell=True,
+        capture_output=True,  # Alternatively: stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        text=True           # Alternatively: universal_newlines=True
+    )
+
+    wifi = result.stdout.strip()
+
+    if str(wifi) in ["0", ""]:
+        wifi = "No Internet"
+    else:
+        wifi = wifi.replace("yes:", "")
+
+    print(str(wifi))
+
+    return render_template('index.html', title=title, content=content, ref=ref, bg=bg, local=local, wifi=wifi)
 
 @app.route('/rename', methods=["POST"])
 def rename():

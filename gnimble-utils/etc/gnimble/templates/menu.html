@@ -195,6 +195,7 @@
         let networks = [];
 
         async function connectWifi(net = document.getElementById("wifi-label").textContent) {
+            document.getElementById("loading-popup").style.display = "flex";
             const response = await fetch("/wifi-connect", {
                 method: 'POST',
                 headers: {
@@ -207,6 +208,7 @@
                     serial: "{{serial}}"
                 })
             }).then((response) => response.json()).then((data) => {
+                document.getElementById("loading-popup").style.display = "none";
                 window.location.reload();
             });
         }
@@ -305,7 +307,7 @@
             updateStats();
         }, 60000);
 
-        let code = new QRCode(document.getElementById("qrcode"), "http://{{ip}}:5000");
+        let code = new QRCode(document.getElementById("qrcode"), "https://{{ip}}:5000");
 
         async function create() {
             const response = await fetch("/create", {

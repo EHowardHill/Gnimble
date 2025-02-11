@@ -39,6 +39,14 @@
 <body>
     <div hidden id="ref">{{ ref }}</div>
 
+    <div id="loading-popup" class="overlay" style="display: none;">
+        <div style="flex: 1;"> </div>
+        <center>
+            <img src="static/loading-book.gif">
+        </center>
+        <div style="flex: 1;"> </div>
+    </div>
+
     {% if local == "N" %}
     <div id="password-popup" class="overlay" style="display: none;">
         <div style="flex: 1;"> </div>
@@ -136,6 +144,7 @@
 
     <script>
         async function print() {
+            document.getElementById("loading-popup").style.display = "flex";
             const response = await fetch("/print", {
                 method: 'POST',
                 headers: {
@@ -147,6 +156,7 @@
                     serial: password
                 })
             }).then((response) => response.json()).then((data) => {
+                document.getElementById("loading-popup").style.display = "none";
                 if (data["success"] == 1) {
                     window.open('../static/output.pdf', '_blank').focus();
                 } else if (data["success"] == 401) {
@@ -156,6 +166,7 @@
         }
 
         async function print_docx() {
+            document.getElementById("loading-popup").style.display = "flex";
             save();
             const response = await fetch("/docx", {
                 method: 'POST',
@@ -168,6 +179,7 @@
                     serial: password
                 })
             }).then((response) => response.json()).then((data) => {
+                document.getElementById("loading-popup").style.display = "none";
                 if (data["success"] == 1) {
                     window.open('../static/output.docx', '_blank').focus();
                 } else if (data["success"] == 401) {
@@ -177,6 +189,7 @@
         }
 
         async function print_text() {
+            document.getElementById("loading-popup").style.display = "flex";
             save();
             const response = await fetch("/text", {
                 method: 'POST',
@@ -189,6 +202,7 @@
                     serial: password
                 })
             }).then((response) => response.json()).then((data) => {
+                document.getElementById("loading-popup").style.display = "none";
                 if (data["success"] == 1) {
                     window.open('../static/output.txt', '_blank').focus();
                 } else if (data["success"] == 401) {
@@ -203,6 +217,8 @@
         }
 
         async function delete2() {
+            document.getElementById("loading-popup").style.display = "flex";
+
             const response = await fetch("/delete", {
                 method: 'POST',
                 headers: {
@@ -214,6 +230,7 @@
                     serial: password
                 })
             }).then((response) => response.json()).then((data) => {
+                document.getElementById("loading-popup").style.display = "none";
                 if (data["success"] == 1) {
                     window.location.href = '/';
                 } else if (data["success"] == 401) {
@@ -221,6 +238,73 @@
                 }
             });
         }
+
+        function capitalizeFirstLetter(val) {
+            val = val.trim();
+            return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+        }
+
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        let currentSentence = "";
+        let lastSentence = "";
+        let fullMessage = "";
+
+        let activeListening = false;
+        let pauseTimer;
+        const pauseThreshold = 1000; // 1 second pause before finalizing sentence
+
+        function startListening() {
+            document.getElementById("micOn").style.display = "none";
+            document.getElementById("micOff").style.display = "block";
+            recognition.start();
+            activeListening = true;
+        }
+
+        function stopListening() {
+            document.getElementById("micOn").style.display = "block";
+            document.getElementById("micOff").style.display = "none";
+
+            currentSentence = "";
+            lastSentence = "";
+            fullMessage = "";
+            recognition.stop();
+            activeListening = false;
+            clearTimeout(pauseTimer); // Clear any pending timer
+            finalizeSentence(); // Force finalize on stop
+        }
+
+        function finalizeSentence() {
+            if (currentSentence.trim() !== "") { // Check for empty sentences
+                document.getElementsByClassName("ql-editor")[0].innerHTML += capitalizeFirstLetter(currentSentence) + ". ";
+                currentSentence = "";
+                lastSentence = "";
+            }
+        }
+
+        recognition.onresult = function (event) {
+            if (activeListening) {
+                let newSentence = ''; // Renamed to avoid confusion
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    newSentence += event.results[i][0].transcript;
+                }
+
+                newSentence = capitalizeFirstLetter(newSentence);
+
+                if (newSentence !== currentSentence) { // Only update if the text has changed
+                    currentSentence = newSentence;
+                    lastSentence = newSentence; // Keep track of the latest sentence
+                    clearTimeout(pauseTimer); // Reset the timer on new input
+
+                    pauseTimer = setTimeout(finalizeSentence, pauseThreshold); // Set timer for pause
+                }
+            }
+        };
+
     </script>
 
     <div class="container">
@@ -245,6 +329,24 @@
             {% endif %}
 
             <div style="flex: 1;"></div>
+
+            <button id="micOn" style="display: block;" id="micOn" onclick="startListening()">Start<br>Transcription</button>
+
+            <script>
+                var winNav = window.navigator;
+                var vendorName = winNav.vendor;
+                if (!vendorName.includes("Google")) {
+                    document.getElementById("micOn").style.display = "none";
+                }
+
+                {% if local == "Y" and wifi == "No Internet" %}
+                document.getElementById("micOn").style.display = "none";
+                {% endif %}
+            </script>
+
+            <button style="display: none;" id="micOff" onclick="stopListening()">
+                <img src="static/mic.gif" width="64px">
+            </button>
             <button id="btnSave" onclick="save()">Save</button>
             <button onclick="popup('information');">Information</button>
             <button onclick="save(); window.location.href='/';">Return</button>
