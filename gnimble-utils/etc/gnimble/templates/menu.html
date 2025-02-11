@@ -131,14 +131,24 @@
             </div>
             <div id="sync" style="display: none;">
                 {% if local == "Y" %}
+                {% if wifi == "No Internet" %}
+
+                <p><strong>Please connect to the internet to enable sync.</strong></p>
+                <div hidden id="qrcode"></div>
+                <button onclick="popdown()">Return</button>
+
+                {% else %}
+
                 <p><strong>To connect to your Gnimble device:</strong></p>
                 <p>1. Make sure both devices are on the same Wi-Fi network.</p>
                 <p>2. Open a web browser, and visit the address below:</p>
-                <h1>http://{{ip}}:5000</h1>
+                <h1>https://{{ip}}:5000</h1>
                 <p>3. Enter your password:</p>
-                <h2>{{ serial }}</h2>
+                <h1>{{ serial }}</h1>
                 <div id="qrcode"></div>
                 <button onclick="popdown()">Return</button>
+
+                {% endif %}
                 {% endif %}
             </div>
             <div id="settings" style="display: none;">
