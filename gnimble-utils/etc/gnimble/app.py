@@ -3,7 +3,7 @@ from docx import Document
 from flask import Flask, render_template, request, redirect, url_for
 from htmldocx import HtmlToDocx
 from json import load, loads, dump
-from os import path, listdir, remove, system
+from os import path, listdir, remove, system, popen
 from time import sleep
 from werkzeug.utils import secure_filename
 import html2text
@@ -24,6 +24,11 @@ else:
 
 UPLOAD_FOLDER = 'static'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+def version():
+    v = popen("apt-cache policy gnimble-utils | grep Installed:").read().strip()
+    v = v.replace("Installed: ", "")
+    return v
 
 def list_wifi_networks():
     try:
@@ -133,7 +138,8 @@ def menu():
         serial=serial_number,
         battery=battery,
         time=time,
-        wifi=wifi)
+        wifi=wifi,
+        version=version())
 
 @app.route('/edit')
 def edit():

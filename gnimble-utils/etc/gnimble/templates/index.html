@@ -45,6 +45,11 @@
             <img src="static/loading-book.gif">
         </center>
         <div style="flex: 1;"> </div>
+        <div style="padding: 12px;">
+            <center>
+                If you are stuck on this screen for some time, you may press the ↻ key to reload.
+            </center>
+        </div>
     </div>
 
     {% if local == "N" %}
@@ -435,6 +440,17 @@
                 }
             });
         }
+
+        setInterval(async () => {
+            save();
+        }, 60000);
+
+        document.addEventListener('keydown', function(event) {
+            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+                event.preventDefault();
+                save();
+            }
+        });
     </script>
 </body>
 
