@@ -22,13 +22,15 @@ else:
     with open("/tmp/key", "r") as f:
         serial_number = f.read()
 
-UPLOAD_FOLDER = 'static'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+UPLOAD_FOLDER = "static"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
 
 def version():
     v = popen("apt-cache policy gnimble-utils | grep Installed:").read().strip()
     v = v.replace("Installed: ", "")
     return v
+
 
 def list_wifi_networks():
     try:
@@ -36,7 +38,7 @@ def list_wifi_networks():
             ["nmcli", "-t", "-f", "SSID,SECURITY", "dev", "wifi", "list"],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
     except:
         print("Error")
@@ -56,6 +58,7 @@ def list_wifi_networks():
     print(networks)
     return networks
 
+
 def get_intranet_ip():
     """Gets the IP address of the current machine on the intranet."""
     try:
@@ -67,41 +70,67 @@ def get_intranet_ip():
     except Exception:
         return None
 
+
+def get_default_printer():
+    try:
+        result = subprocess.run(
+            ["lpstat", "-d"], capture_output=True, text=True, check=True
+        )
+        output = result.stdout.strip()
+        if output.startswith("system default destination:"):
+            return output.split(": ")[1]
+        else:
+            return None
+    except subprocess.CalledProcessError:
+        return None
+
+
+def get_available_printers():
+    try:
+        result = subprocess.run(
+            ["lpstat", "-p"], capture_output=True, text=True, check=True
+        )
+        lines = result.stdout.strip().split("\n")
+        printers = []
+        for line in lines:
+            if line.startswith("printer "):
+                parts = line.split()
+                printer_name = parts[1]
+                printers.append(printer_name)
+        return printers
+    except subprocess.CalledProcessError:
+        return []
+
+
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/get_time', methods=['POST'])
+
+@app.route("/get_time", methods=["POST"])
 def get_time():
-    return {
-        "success": 1,
-        "time": datetime.now().strftime("%I:%M %p")
-    }
+    return {"success": 1, "time": datetime.now().strftime("%I:%M %p")}
 
-@app.route('/get_battery', methods=['POST'])
+
+@app.route("/get_battery", methods=["POST"])
 def get_battery():
     battery = psutil.sensors_battery()
     if battery is not None:
         percent = str(int(battery.percent))
-        return {
-            "success": 1,
-            "battery": percent + '%'
-        }
+        return {"success": 1, "battery": percent + "%"}
     else:
-        return {
-            "success": 1,
-            "battery": "No Battery"
-        }
+        return {"success": 1, "battery": "No Battery"}
 
-@app.route('/')
+
+@app.route("/")
 def menu():
     IPAddr = get_intranet_ip()
 
     print([request.remote_addr, IPAddr])
-    local = "Y" if request.remote_addr == '127.0.0.1' else "N"
+    local = "Y" if request.remote_addr == "127.0.0.1" else "N"
 
     stories = []
     for link in listdir("stories"):
@@ -114,12 +143,12 @@ def menu():
 
     time = get_time()["time"]
     battery = get_battery()["battery"]
-    
+
     result = subprocess.run(
         "nmcli -t -f active,ssid dev wifi | grep yes:",
         shell=True,
         capture_output=True,  # Alternatively: stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        text=True           # Alternatively: universal_newlines=True
+        text=True,  # Alternatively: universal_newlines=True
     )
 
     wifi = result.stdout.strip()
@@ -128,9 +157,9 @@ def menu():
         wifi = "No Internet"
     else:
         wifi = wifi.replace("yes:", "")
-    
+
     return render_template(
-        'menu.html',
+        "menu.html",
         stories=stories,
         ip=IPAddr,
         bg=bg,
@@ -139,12 +168,14 @@ def menu():
         battery=battery,
         time=time,
         wifi=wifi,
-        version=version())
+        version=version(),
+    )
 
-@app.route('/edit')
+
+@app.route("/edit")
 def edit():
 
-    local = "Y" if request.remote_addr == '127.0.0.1' else "N"
+    local = "Y" if request.remote_addr == "127.0.0.1" else "N"
 
     ref = request.args.get("ref")
     with open(path.join("stories", ref + ".json"), "r") as f:
@@ -158,7 +189,7 @@ def edit():
         "nmcli -t -f active,ssid dev wifi | grep yes:",
         shell=True,
         capture_output=True,  # Alternatively: stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        text=True           # Alternatively: universal_newlines=True
+        text=True,  # Alternatively: universal_newlines=True
     )
 
     wifi = result.stdout.strip()
@@ -170,17 +201,24 @@ def edit():
 
     print(str(wifi))
 
-    return render_template('index.html', title=title, content=content, ref=ref, bg=bg, local=local, wifi=wifi)
+    return render_template(
+        "index.html",
+        title=title,
+        content=content,
+        ref=ref,
+        bg=bg,
+        local=local,
+        wifi=wifi,
+    )
 
-@app.route('/rename', methods=["POST"])
+
+@app.route("/rename", methods=["POST"])
 def rename():
-    if request.remote_addr != '127.0.0.1':
+    if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
-            return {
-                "success": 401
-            }
-        
+            return {"success": 401}
+
     ref = request.json.get("ref")
     title = request.json.get("title")
 
@@ -192,102 +230,83 @@ def rename():
     with open(path.join("stories", ref + ".json"), "w") as f:
         dump(data, f)
 
-    return {
-        "success": 1
-    }
+    return {"success": 1}
 
-@app.route('/delete', methods=["POST"])
+
+@app.route("/delete", methods=["POST"])
 def delete():
-    if request.remote_addr != '127.0.0.1':
+    if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
-            return {
-                "success": 401
-            }
-        
+            return {"success": 401}
+
     ref = request.json.get("ref")
     remove(path.join("stories", ref + ".json"))
 
-    return {
-        "success": 1
-    }
+    return {"success": 1}
 
-@app.route('/create', methods=["POST"])
+
+@app.route("/create", methods=["POST"])
 def create():
-    if request.remote_addr != '127.0.0.1':
+    if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
-            return {
-                "success": 401
-            }
-        
+            return {"success": 401}
+
     title = request.json.get("title")
 
     ref = str(random.randint(0, 9999))
     while path.exists(path.join("stories", ref + ".json")):
         ref = str(random.randint(0, 9999))
 
-    data = {
-        "ref": ref,
-        "title": title,
-        "content": "It was a dark and stormy night..."
-    }
+    data = {"ref": ref, "title": title, "content": "It was a dark and stormy night..."}
 
     with open(path.join("stories", ref + ".json"), "w") as f:
         dump(data, f)
 
-    return {
-        "success": 1
-    }
+    return {"success": 1}
 
-@app.route('/save', methods=["POST"])
+
+@app.route("/save", methods=["POST"])
 def save():
-    if request.remote_addr != '127.0.0.1':
+    if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
-            return {
-                "success": 401
-            }
-        
+            return {"success": 401}
+
     ref = request.json.get("ref")
     title = request.json.get("title")
     content = request.json.get("content")
 
-    data = {
-        "ref": ref,
-        "title": title,
-        "content": content
-    }
+    data = {"ref": ref, "title": title, "content": content}
 
     with open(path.join("stories", ref + ".json"), "w") as f:
         dump(data, f)
 
-    return {
-        "success": 1
-    }
+    return {"success": 1}
 
-@app.route('/upload', methods=['POST'])
+
+@app.route("/upload", methods=["POST"])
 def upload_file():
-    file = request.files['file']
+    file = request.files["file"]
 
     if file:
         filename = secure_filename(file.filename)
-        tmp_path = path.join("static", 'tmp', filename)
+        tmp_path = path.join("static", "tmp", filename)
         for f in listdir(path.join("static", "tmp")):
             remove(path.join("static", "tmp", f))
         file.save(tmp_path)
 
-    return redirect(url_for('menu'))
+    return redirect(url_for("menu"))
 
-@app.route('/print', methods=['POST'])
+
+@app.route("/print", methods=["POST"])
 def print_document():
-    if request.remote_addr != '127.0.0.1':
+    if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
-            return {
-                "success": 401
-            }
-        
+            return {"success": 401}
+
     sleep(1)
     ref = request.json.get("ref")
     with open(path.join("stories", ref + ".json"), "r") as f:
@@ -295,66 +314,119 @@ def print_document():
         print("vvv" + fd)
         data = loads(fd)
 
-    content = """<link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet"><div class="ql-editor">""" + data["content"] + """</div>"""
+    content = (
+        """<link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet"><div class="ql-editor">"""
+        + data["content"]
+        + """</div>"""
+    )
     pdf = weasyprint.HTML(string=content).write_pdf()
-    open(path.join("static", 'output.pdf'), 'wb').write(pdf)
-    return {
-        "success": 1
-    }
+    open(path.join("static", "output.pdf"), "wb").write(pdf)
+    return {"success": 1}
 
-@app.route('/docx', methods=['POST'])
-def print_docx():
-    if request.remote_addr != '127.0.0.1':
+
+@app.route("/print_usb", methods=["POST"])
+def print_document():
+    if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
-            return {
-                "success": 401
-            }
-        
+            return {"success": 401}
+
+    sleep(1)
+    ref = request.json.get("ref")
+    with open(path.join("stories", ref + ".json"), "r") as f:
+        fd = f.read()
+        print("vvv" + fd)
+        data = loads(fd)
+
+    content = (
+        """<link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet"><div class="ql-editor">"""
+        + data["content"]
+        + """</div>"""
+    )
+    pdf = weasyprint.HTML(string=content).write_pdf()
+
+    # Determine the printer to use
+    default_printer = get_default_printer()
+    if default_printer:
+        # Use default printer by not specifying -d
+        cmd = ["lp", "-t", "Print Job", "-o", "document-format=application/pdf", "-"]
+    else:
+        available_printers = get_available_printers()
+        if available_printers:
+            printer_name = available_printers[0]
+            cmd = [
+                "lp",
+                "-d",
+                printer_name,
+                "-t",
+                "Print Job",
+                "-o",
+                "document-format=application/pdf",
+                "-",
+            ]
+        else:
+            print("Error: No printers available.")
+            return {"success": 0}
+
+    # Execute the lp command to print the PDF
+    subprocess.run(cmd, input=pdf, check=True)
+
+    return {"success": 1}
+
+
+@app.route("/docx", methods=["POST"])
+def print_docx():
+    if request.remote_addr != "127.0.0.1":
+        serial = request.json.get("serial")
+        if serial != serial_number:
+            return {"success": 401}
+
     sleep(1)
     ref = request.json.get("ref")
     with open(path.join("stories", ref + ".json"), "r") as f:
         data = load(f)
-    content = """<link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet"><div class="ql-editor">""" + data["content"] + """</div>"""
+    content = (
+        """<link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet"><div class="ql-editor">"""
+        + data["content"]
+        + """</div>"""
+    )
 
     document = Document()
     new_parser = HtmlToDocx()
     new_parser.add_html_to_document(content, document)
     document.save(path.join("static", "output.docx"))
 
-    return {
-        "success": 1
-    }
+    return {"success": 1}
 
-@app.route('/text', methods=['POST'])
+
+@app.route("/text", methods=["POST"])
 def print_text():
-    if request.remote_addr != '127.0.0.1':
+    if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
-            return {
-                "success": 401
-            }
-        
+            return {"success": 401}
+
     sleep(1)
     ref = request.json.get("ref")
     with open(path.join("stories", ref + ".json"), "r") as f:
         data = load(f)
-    
+
     content = html2text.html2text(data["content"])
 
     with open(path.join("static", "output.txt"), "w") as f:
         f.write(content)
 
-    return {
-        "success": 1
-    }
+    return {"success": 1}
 
-@app.route('/wifi-list', methods=['POST'])
+
+@app.route("/wifi-list", methods=["POST"])
 def wifi_list():
-    result = subprocess.run(["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],
-                capture_output=True,
-            text=True,
-            check=True)
+    result = subprocess.run(
+        ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     output = result.stdout.strip().split("\n")
 
     current = "Not Connected"
@@ -363,21 +435,16 @@ def wifi_list():
         if "yes:" in c:
             current = c.replace("yes:", "")
 
-    return {
-        "success": 1,
-        "current": current,
-        "networks": list_wifi_networks()
-    }
+    return {"success": 1, "current": current, "networks": list_wifi_networks()}
 
-@app.route('/wifi-connect', methods=['POST'])
+
+@app.route("/wifi-connect", methods=["POST"])
 def wifi_connect():
-    if request.remote_addr != '127.0.0.1':
+    if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
-            return {
-                "success": 401
-            }
-        
+            return {"success": 401}
+
     ssid = request.json.get("ssid")
     password = request.json.get("password")
     print(["Trying: ", ssid, password])
@@ -388,29 +455,22 @@ def wifi_connect():
 
     try:
         subprocess.run(cmd, check=True)
-        return {
-            "success": 1
-        }
-    
+        return {"success": 1}
+
     except subprocess.CalledProcessError as e:
         print(f"Failed to connect to '{ssid}'.\nError: {e}")
 
-    return {
-        "success": 0
-    }
+    return {"success": 0}
 
-@app.route('/password', methods=['POST'])
+
+@app.route("/password", methods=["POST"])
 def password():
-    if request.remote_addr != '127.0.0.1':
+    if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
-            return {
-                "success": 401
-            }
+            return {"success": 401}
 
     s = request.json.get("serial")
     print([s, serial_number])
 
-    return {
-        "success": 1 if s == serial_number else 0
-    }
+    return {"success": 1 if s == serial_number else 0}

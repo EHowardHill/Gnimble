@@ -133,6 +133,9 @@
                 <button onclick="rename()">Rename</button>
                 <button onclick="popdown()">Return</button>
             </div>
+            <div>
+                <button onclick="print_usb()">Print (USB)</button>
+            </div>
         </center>
         <div style="flex: 1;">
         </div>
@@ -151,6 +154,28 @@
         async function print() {
             document.getElementById("loading-popup").style.display = "flex";
             const response = await fetch("/print", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: "{{ ref }}",
+                    serial: password
+                })
+            }).then((response) => response.json()).then((data) => {
+                document.getElementById("loading-popup").style.display = "none";
+                if (data["success"] == 1) {
+                    window.open('../static/output.pdf', '_blank').focus();
+                } else if (data["success"] == 401) {
+                    document.getElementById("password-popup").style.display = "flex";
+                }
+            });
+        }
+
+        async function print_usb() {
+            document.getElementById("loading-popup").style.display = "flex";
+            const response = await fetch("/print_usb", {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
