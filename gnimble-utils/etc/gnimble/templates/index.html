@@ -136,7 +136,7 @@
             <div>
                 <button onclick="print_usb()">Print (USB)</button>
             </div>
-            <div>
+            <div hidden id="usb_copy">
                 <button onclick="copy_to_usb()">Copy (USB Storage)</button>
             </div>
         </center>
@@ -154,6 +154,32 @@
     </div>
 
     <script>
+
+        async function showUsbCopy() {
+            try {
+                const response = await fetch("/usb-list", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                // Check if data.mounts exists and is an array
+                if (data && Array.isArray(data.mounts)) {
+                    $("#usb-copy").attr("hidden", data.mounts.length > 0);
+                } else {
+                    console.error('Invalid data format received:', data);
+                }
+            } catch (error) {
+                console.error('Error fetching USB list:', error);
+            }
+        }
+
+        setInterval(showUsbCopy, 5000);
+
         async function print() {
             document.getElementById("loading-popup").style.display = "flex";
             const response = await fetch("/print", {
@@ -380,7 +406,8 @@
 
             <div style="flex: 1;"></div>
 
-            <button id="micOn" style="display: block;" id="micOn" onclick="startListening()">Start<br>Transcription</button>
+            <button id="micOn" style="display: block;" id="micOn"
+                onclick="startListening()">Start<br>Transcription</button>
 
             <script>
                 var winNav = window.navigator;
@@ -490,7 +517,7 @@
             save();
         }, 60000);
 
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function (event) {
             if ((event.ctrlKey || event.metaKey) && event.key === 's') {
                 event.preventDefault();
                 save();
