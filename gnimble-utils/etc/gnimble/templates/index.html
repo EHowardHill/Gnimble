@@ -45,6 +45,11 @@
             <img src="static/loading-book.gif">
         </center>
         <div style="flex: 1;"> </div>
+        <div style="padding: 12px;">
+            <center>
+                If you are stuck on this screen for some time, you may press the ↻ key to reload.
+            </center>
+        </div>
     </div>
 
     {% if local == "N" %}
@@ -128,6 +133,12 @@
                 <button onclick="rename()">Rename</button>
                 <button onclick="popdown()">Return</button>
             </div>
+            <div>
+                <button onclick="print_usb()">Print (USB)</button>
+            </div>
+            <div hidden id="usb_copy">
+                <button onclick="copy_to_usb()">Copy (USB Storage)</button>
+            </div>
         </center>
         <div style="flex: 1;">
         </div>
@@ -143,9 +154,74 @@
     </div>
 
     <script>
+
+        async function showUsbCopy() {
+            try {
+                const response = await fetch("/usb-list", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                // Check if data.mounts exists and is an array
+                if (data && Array.isArray(data.mounts)) {
+                    $("#usb-copy").attr("hidden", data.mounts.length > 0);
+                } else {
+                    console.error('Invalid data format received:', data);
+                }
+            } catch (error) {
+                console.error('Error fetching USB list:', error);
+            }
+        }
+
+        setInterval(showUsbCopy, 5000);
+
         async function print() {
             document.getElementById("loading-popup").style.display = "flex";
             const response = await fetch("/print", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: "{{ ref }}",
+                    serial: password
+                })
+            }).then((response) => response.json()).then((data) => {
+                document.getElementById("loading-popup").style.display = "none";
+                if (data["success"] == 1) {
+                    window.open('../static/output.pdf', '_blank').focus();
+                } else if (data["success"] == 401) {
+                    document.getElementById("password-popup").style.display = "flex";
+                }
+            });
+        }
+
+        async function copy_to_usb() {
+            document.getElementById("loading-popup").style.display = "flex";
+            const response = await fetch("/copy_to_usb", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: "{{ ref }}",
+                    serial: password
+                })
+            }).then((response) => response.json()).then((data) => {
+                document.getElementById("loading-popup").style.display = "none";
+            });
+        }
+
+        async function print_usb() {
+            document.getElementById("loading-popup").style.display = "flex";
+            const response = await fetch("/print_usb", {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -436,6 +512,17 @@
                 }
             });
         }
+
+        setInterval(async () => {
+            save();
+        }, 60000);
+
+        document.addEventListener('keydown', function (event) {
+            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+                event.preventDefault();
+                save();
+            }
+        });
     </script>
 </body>
 

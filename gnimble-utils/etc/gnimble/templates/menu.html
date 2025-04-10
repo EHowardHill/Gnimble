@@ -42,6 +42,11 @@
             <img src="static/loading-book.gif">
         </center>
         <div style="flex: 1;"> </div>
+        <div style="padding: 12px;">
+            <center>
+                If you are stuck on this screen for some time, you may press the ↻ key to reload.
+            </center>
+        </div>
     </div>
 
     {% if local == "N" %}
@@ -54,7 +59,7 @@
                 <button onclick="password_check(false)">Submit</button>
             </div>
         </center>
-        <div style="flex: 1;"> </div>
+        <div style="flex: 3;"> </div>
     </div>
 
     <script>
@@ -175,6 +180,11 @@
             </div>
         </center>
         <div style="flex: 1;"> </div>
+        <div style="padding: 12px;">
+            <center>
+                Gnimble System Software, v.{{ version }}
+            </center>
+        </div>
     </div>
 
     <div class="container">
@@ -320,7 +330,7 @@
 
         setInterval(async () => {
             updateStats();
-        }, 60000);
+        }, 5000);
 
         let code = new QRCode(document.getElementById("qrcode"), "https://{{ip}}:5000");
 
