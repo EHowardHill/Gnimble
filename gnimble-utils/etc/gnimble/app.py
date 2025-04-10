@@ -3,7 +3,7 @@ from docx import Document
 from flask import Flask, render_template, request, redirect, url_for
 from htmldocx import HtmlToDocx
 from json import load, loads, dump
-from os import path, listdir, remove, system, popen
+from os import path, listdir, remove, system, popen, mkdir
 from time import sleep
 from werkzeug.utils import secure_filename
 import html2text
@@ -12,6 +12,8 @@ import random
 import socket
 import subprocess
 import weasyprint
+import pyudev
+import re
 
 serial_number = ""
 if not path.exists("/tmp/key"):
@@ -24,6 +26,43 @@ else:
 
 UPLOAD_FOLDER = "static"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+
+def decode_mount_point(escaped):
+    def replace_octal(match):
+        return chr(int(match.group(1), 8))
+
+    return re.sub(r"\\(\d{3})", replace_octal, escaped)
+
+
+def get_mount_point(device_node):
+    try:
+        with open("/proc/mounts", "r") as f:
+            for line in f:
+                parts = line.split()
+                if parts[0] == device_node:
+                    escaped_mount_point = parts[1]
+                    return decode_mount_point(escaped_mount_point)
+    except IOError:
+        # Silently return None if /proc/mounts can't be read
+        return None
+    return None
+
+
+def get_usb_mount_points():
+    context = pyudev.Context()
+    mount_points = []
+
+    # Iterate over all block devices
+    for device in context.list_devices(subsystem="block"):
+        # Check if the device has a USB parent, indicating it's a USB mass storage device
+        if device.find_parent("usb"):
+            device_node = device.device_node  # e.g., '/dev/sdb1'
+            mount_point = get_mount_point(device_node)
+            if mount_point:
+                mount_points.append(mount_point)
+
+    return mount_points
 
 
 def version():
@@ -128,7 +167,6 @@ def get_battery():
 @app.route("/")
 def menu():
     IPAddr = get_intranet_ip()
-
     print([request.remote_addr, IPAddr])
     local = "Y" if request.remote_addr == "127.0.0.1" else "N"
 
@@ -138,6 +176,22 @@ def menu():
             data = load(f)
             print(data["title"])
             stories.append({"ref": data["ref"], "title": data["title"]})
+
+    current_mounts = set(get_usb_mount_points())
+    for mount in current_mounts:
+        p = path.join(p, "stories", "raw")
+        if not path.exists(p):
+            mkdir(p)
+        for link in listdir(p):
+            with open(path.join("stories", link), "r") as f:
+                data = load(f)
+                print(data["title"])
+                contains = False
+                for s in stories:
+                    if s["title"] == data["title"]:
+                        contains = True
+                if not contains:
+                    stories.append({"ref": data["ref"], "title": data["title"]})
 
     bg = listdir(path.join("static", "tmp"))[0]
 
@@ -325,7 +379,7 @@ def print_document():
 
 
 @app.route("/print_usb", methods=["POST"])
-def print_document():
+def print_usb():
     if request.remote_addr != "127.0.0.1":
         serial = request.json.get("serial")
         if serial != serial_number:
@@ -415,6 +469,38 @@ def print_text():
 
     with open(path.join("static", "output.txt"), "w") as f:
         f.write(content)
+
+    return {"success": 1}
+
+
+@app.route("/usb-list", methods=["POST"])
+def usb_list():
+    current_mounts = set(get_usb_mount_points())
+    return {"success": 1, "mounts": current_mounts}
+
+
+@app.route("/copy_to_usb", methods=["POST"])
+def copy_to_usb():
+
+    ref = request.json.get("ref")
+    with open(path.join("stories", ref + ".json"), "r") as f:
+        fd = f.read()
+        print("vvv" + fd)
+        data = loads(fd)
+
+    current_mounts = set(get_usb_mount_points())
+
+    for mount in current_mounts:
+        p = path.join(mount, "stories")
+        pp = path.join(p, "raw")
+        if not path.exists(p):
+            mkdir(p)
+        if not path.exists(pp):
+            mkdir(pp)
+        with open(path.join(p, data["title"] + ".html"), "w", encoding="utf-8") as f:
+            f.write(data["content"])
+        with open(path.join(pp, ref + ".json"), "w", encoding="utf-8") as f:
+            f.write(data)
 
     return {"success": 1}
 

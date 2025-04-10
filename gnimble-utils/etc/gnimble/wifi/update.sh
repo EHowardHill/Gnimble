@@ -2,7 +2,7 @@
 
 # Additional packages
 apt update -y
-apt install -y cups-client
+apt install -y cups-client python3-pyudev
 
 # Maintenance
 apt upgrade -y

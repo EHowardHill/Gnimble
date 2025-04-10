@@ -136,6 +136,9 @@
             <div>
                 <button onclick="print_usb()">Print (USB)</button>
             </div>
+            <div>
+                <button onclick="copy_to_usb()">Copy (USB Storage)</button>
+            </div>
         </center>
         <div style="flex: 1;">
         </div>
@@ -170,6 +173,23 @@
                 } else if (data["success"] == 401) {
                     document.getElementById("password-popup").style.display = "flex";
                 }
+            });
+        }
+
+        async function copy_to_usb() {
+            document.getElementById("loading-popup").style.display = "flex";
+            const response = await fetch("/copy_to_usb", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: "{{ ref }}",
+                    serial: password
+                })
+            }).then((response) => response.json()).then((data) => {
+                document.getElementById("loading-popup").style.display = "none";
             });
         }
 
