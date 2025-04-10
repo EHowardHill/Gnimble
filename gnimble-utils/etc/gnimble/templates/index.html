@@ -39,7 +39,7 @@
 <body>
     <div hidden id="ref">{{ ref }}</div>
 
-    <div id="loading-popup" class="overlay" style="display: none;">
+    <div id="loading-popup" class="overlay z-102" style="display: none;">
         <div style="flex: 1;"> </div>
         <center>
             <img src="static/loading-book.gif">
@@ -330,7 +330,8 @@
 
             <div style="flex: 1;"></div>
 
-            <button id="micOn" style="display: block;" id="micOn" onclick="startListening()">Start<br>Transcription</button>
+            <button hidden id="micOn" style="display: none;" id="micOn"
+                onclick="startListening()">Start<br>Transcription</button>
 
             <script>
                 var winNav = window.navigator;

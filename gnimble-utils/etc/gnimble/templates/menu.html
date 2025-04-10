@@ -36,7 +36,7 @@
 <body>
     <div hidden id="ref">{{ ref }}</div>
 
-    <div id="loading-popup" class="overlay" style="display: none;">
+    <div id="loading-popup" class="overlay z-102" style="display: none;">
         <div style="flex: 1;"> </div>
         <center>
             <img src="static/loading-book.gif">
@@ -206,6 +206,8 @@
 
         async function connectWifi(net = document.getElementById("wifi-label").textContent) {
             document.getElementById("loading-popup").style.display = "flex";
+            location.reload(true);
+
             const response = await fetch("/wifi-connect", {
                 method: 'POST',
                 headers: {
@@ -225,6 +227,7 @@
 
         function queueWifi(net) {
             let myNetwork = [];
+            document.getElementById("loading-popup").style.display = "flex";
 
             networks.forEach((entry) => {
                 console.log(entry[0]);
@@ -239,6 +242,8 @@
                     }
                 }
             });
+
+            document.getElementById("loading-popup").style.display = "none";
         }
 
         function go(ref) {
