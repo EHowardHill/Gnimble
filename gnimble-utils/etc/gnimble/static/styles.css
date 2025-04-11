@@ -188,3 +188,23 @@ input {
     border: 6px solid transparent;
     background-clip: content-box;
 }
+
+#status-popup {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background-color: #000;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: large;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 1000;
+    max-width: 250px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+}
+
+#status-popup.show {
+    opacity: 1;
+}

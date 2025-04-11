@@ -12,7 +12,6 @@ import random
 import socket
 import subprocess
 import weasyprint
-import pyudev
 import re
 
 serial_number = ""
@@ -47,23 +46,6 @@ def get_mount_point(device_node):
         # Silently return None if /proc/mounts can't be read
         return None
     return None
-
-
-def get_usb_mount_points():
-    context = pyudev.Context()
-    mount_points = []
-
-    # Iterate over all block devices
-    for device in context.list_devices(subsystem="block"):
-        # Check if the device has a USB parent, indicating it's a USB mass storage device
-        if device.find_parent("usb"):
-            device_node = device.device_node  # e.g., '/dev/sdb1'
-            mount_point = get_mount_point(device_node)
-            if mount_point:
-                mount_points.append(mount_point)
-
-    return mount_points
-
 
 def version():
     v = popen("apt-cache policy gnimble-utils | grep Installed:").read().strip()
@@ -163,6 +145,15 @@ def get_battery():
     else:
         return {"success": 1, "battery": "No Battery"}
 
+def mount():
+    if path.exists("/dev/sda1"):
+        system("sudo /etc/gnimble/wifi/mount.sh")
+        return True
+    return False
+
+def umount():
+    if path.exists("/dev/sda1"):
+        system("sudo /etc/gnimble/wifi/umount.sh &")
 
 @app.route("/")
 def menu():
@@ -177,13 +168,12 @@ def menu():
             print(data["title"])
             stories.append({"ref": data["ref"], "title": data["title"]})
 
-    current_mounts = set(get_usb_mount_points())
-    for mount in current_mounts:
-        p = path.join(p, "stories", "raw")
+    if mount():
+        p = "/mnt/usb/raw"
         if not path.exists(p):
             mkdir(p)
         for link in listdir(p):
-            with open(path.join("stories", link), "r") as f:
+            with open(path.join(p, link), "r") as f:
                 data = load(f)
                 print(data["title"])
                 contains = False
@@ -192,6 +182,7 @@ def menu():
                         contains = True
                 if not contains:
                     stories.append({"ref": data["ref"], "title": data["title"]})
+        umount()
 
     bg = listdir(path.join("static", "tmp"))[0]
 
@@ -378,56 +369,6 @@ def print_document():
     return {"success": 1}
 
 
-@app.route("/print_usb", methods=["POST"])
-def print_usb():
-    if request.remote_addr != "127.0.0.1":
-        serial = request.json.get("serial")
-        if serial != serial_number:
-            return {"success": 401}
-
-    sleep(1)
-    ref = request.json.get("ref")
-    with open(path.join("stories", ref + ".json"), "r") as f:
-        fd = f.read()
-        print("vvv" + fd)
-        data = loads(fd)
-
-    content = (
-        """<link href="//cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet"><div class="ql-editor">"""
-        + data["content"]
-        + """</div>"""
-    )
-    pdf = weasyprint.HTML(string=content).write_pdf()
-
-    # Determine the printer to use
-    default_printer = get_default_printer()
-    if default_printer:
-        # Use default printer by not specifying -d
-        cmd = ["lp", "-t", "Print Job", "-o", "document-format=application/pdf", "-"]
-    else:
-        available_printers = get_available_printers()
-        if available_printers:
-            printer_name = available_printers[0]
-            cmd = [
-                "lp",
-                "-d",
-                printer_name,
-                "-t",
-                "Print Job",
-                "-o",
-                "document-format=application/pdf",
-                "-",
-            ]
-        else:
-            print("Error: No printers available.")
-            return {"success": 0}
-
-    # Execute the lp command to print the PDF
-    subprocess.run(cmd, input=pdf, check=True)
-
-    return {"success": 1}
-
-
 @app.route("/docx", methods=["POST"])
 def print_docx():
     if request.remote_addr != "127.0.0.1":
@@ -473,10 +414,9 @@ def print_text():
     return {"success": 1}
 
 
-@app.route("/usb-list", methods=["POST"])
+@app.route("/usb", methods=["POST"])
 def usb_list():
-    current_mounts = set(get_usb_mount_points())
-    return {"success": 1, "mounts": current_mounts}
+    return {"success": 1, "exists": path.exists("/dev/sda1")}
 
 
 @app.route("/copy_to_usb", methods=["POST"])
@@ -488,19 +428,15 @@ def copy_to_usb():
         print("vvv" + fd)
         data = loads(fd)
 
-    current_mounts = set(get_usb_mount_points())
-
-    for mount in current_mounts:
-        p = path.join(mount, "stories")
-        pp = path.join(p, "raw")
+    if mount():
+        p = "/mnt/usb/raw"
         if not path.exists(p):
             mkdir(p)
-        if not path.exists(pp):
-            mkdir(pp)
-        with open(path.join(p, data["title"] + ".html"), "w", encoding="utf-8") as f:
+        with open(path.join("/mnt/usb/", data["title"] + ".html"), "w", encoding="utf-8") as f:
             f.write(data["content"])
-        with open(path.join(pp, ref + ".json"), "w", encoding="utf-8") as f:
-            f.write(data)
+        with open(path.join(p, ref + ".json"), "w", encoding="utf-8") as f:
+            dump(data, f)
+        umount()
 
     return {"success": 1}
 

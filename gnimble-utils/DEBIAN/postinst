@@ -3,6 +3,7 @@ set -e
 
 # - Permissions
 chmod 755 /etc/gnimble/wifi/*.sh
+chmod uog+rw /etc/gnimble/stories/*
 
 # - Handle dependencies
 python3 -m pip install weasyprint flask pillow gunicorn htmldocx html2text psutil --break-system-packages
@@ -10,12 +11,13 @@ python3 -m pip install weasyprint flask pillow gunicorn htmldocx html2text psuti
 # - Manage wifi selection settings
 SUDOERS_FILE="/etc/sudoers.d/connect_sh"
 cat << EOF > "$SUDOERS_FILE"
-# Allow everyone to run connect.sh without password
 ALL ALL=(root) NOPASSWD: /etc/gnimble/wifi/connect.sh
+ALL ALL=(root) NOPASSWD: /etc/gnimble/wifi/mount.sh
+ALL ALL=(root) NOPASSWD: /etc/gnimble/wifi/umount.sh
 EOF
 chmod 440 "$SUDOERS_FILE"
 
 # - Handle server script
 systemctl daemon-reload
 systemctl enable --now gnimble-server.service
-systemctl enable gnimble-update.service
+systemctl enable --now gnimble-update.service

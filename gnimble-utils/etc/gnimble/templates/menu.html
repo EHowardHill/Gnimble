@@ -34,6 +34,8 @@
 </head>
 
 <body>
+    <div id="status-popup"></div>
+
     <div hidden id="ref">{{ ref }}</div>
 
     <div id="loading-popup" class="overlay z-102" style="display: none;">
@@ -391,6 +393,30 @@
                 window.location.reload();
             }
         });
+
+        // Active timer for the current popup
+        let statusTimer = null;
+
+        function showStatus(message) {
+            const popup = document.getElementById('status-popup');
+
+            // Clear any existing timer
+            if (statusTimer) {
+                clearTimeout(statusTimer);
+            }
+
+            // Set the message
+            popup.textContent = message;
+
+            // Show the popup
+            popup.classList.add('show');
+
+            // Set timer to hide the popup after 2 seconds
+            statusTimer = setTimeout(() => {
+                popup.classList.remove('show');
+                statusTimer = null;
+            }, 2000);
+        }
     </script>
 </body>
 

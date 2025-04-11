@@ -37,6 +37,8 @@
 </head>
 
 <body>
+    <div id="status-popup"></div>
+
     <div hidden id="ref">{{ ref }}</div>
 
     <div id="loading-popup" class="overlay z-102" style="display: none;">
@@ -133,12 +135,6 @@
                 <button onclick="rename()">Rename</button>
                 <button onclick="popdown()">Return</button>
             </div>
-            <div>
-                <button onclick="print_usb()">Print (USB)</button>
-            </div>
-            <div hidden id="usb_copy">
-                <button onclick="copy_to_usb()">Copy (USB Storage)</button>
-            </div>
         </center>
         <div style="flex: 1;">
         </div>
@@ -157,7 +153,7 @@
 
         async function showUsbCopy() {
             try {
-                const response = await fetch("/usb-list", {
+                const response = await fetch("/usb", {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
@@ -166,13 +162,12 @@
                 });
 
                 const data = await response.json();
-
-                // Check if data.mounts exists and is an array
-                if (data && Array.isArray(data.mounts)) {
-                    $("#usb-copy").attr("hidden", data.mounts.length > 0);
+                if (data["exists"]) {
+                    document.getElementById("usb_copy").style.display = "block";
                 } else {
-                    console.error('Invalid data format received:', data);
+                    document.getElementById("usb_copy").style.display = "none";
                 }
+
             } catch (error) {
                 console.error('Error fetching USB list:', error);
             }
@@ -216,28 +211,7 @@
                 })
             }).then((response) => response.json()).then((data) => {
                 document.getElementById("loading-popup").style.display = "none";
-            });
-        }
-
-        async function print_usb() {
-            document.getElementById("loading-popup").style.display = "flex";
-            const response = await fetch("/print_usb", {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    ref: "{{ ref }}",
-                    serial: password
-                })
-            }).then((response) => response.json()).then((data) => {
-                document.getElementById("loading-popup").style.display = "none";
-                if (data["success"] == 1) {
-                    window.open('../static/output.pdf', '_blank').focus();
-                } else if (data["success"] == 401) {
-                    document.getElementById("password-popup").style.display = "flex";
-                }
+                showStatus("Your story has been copied to the USB media.");
             });
         }
 
@@ -406,25 +380,10 @@
 
             <div style="flex: 1;"></div>
 
-            <button hidden id="micOn" style="display: none;" id="micOn"
-                onclick="startListening()">Start<br>Transcription</button>
-
-            <script>
-                var winNav = window.navigator;
-                var vendorName = winNav.vendor;
-                if (!vendorName.includes("Google")) {
-                    document.getElementById("micOn").style.display = "none";
-                }
-
-                {% if local == "Y" and wifi == "No Internet" %}
-                document.getElementById("micOn").style.display = "none";
-                {% endif %}
-            </script>
-
-            <button style="display: none;" id="micOff" onclick="stopListening()">
-                <img src="static/mic.gif" width="64px">
-            </button>
-            <button id="btnSave" onclick="save()">Save</button>
+            <div style="display: none;" id="usb_copy">
+                <button onclick="copy_to_usb()">Save Copy to USB</button>
+            </div>
+            <button id="btnSave" onclick="save(true)">Save</button>
             <button onclick="popup('information');">Information</button>
             <button onclick="save(); window.location.href='/';">Return</button>
         </div>
@@ -491,7 +450,7 @@
             document.getElementById("btnSave").classList.add("poked");
         }
 
-        async function save() {
+        async function save(notify) {
             const response = await fetch("/save", {
                 method: 'POST',
                 headers: {
@@ -506,6 +465,9 @@
                 })
             }).then((response) => response.json()).then((data) => {
                 if (data["success"] == 1) {
+                    if (notify) {
+                        showStatus("Document has been saved.");
+                    }
                     document.getElementById("btnSave").classList.remove("poked");
                 } else if (data["success"] == 401) {
                     document.getElementById("password-popup").style.display = "flex";
@@ -516,6 +478,30 @@
         setInterval(async () => {
             save();
         }, 60000);
+
+        // Active timer for the current popup
+        let statusTimer = null;
+
+        function showStatus(message) {
+            const popup = document.getElementById('status-popup');
+
+            // Clear any existing timer
+            if (statusTimer) {
+                clearTimeout(statusTimer);
+            }
+
+            // Set the message
+            popup.textContent = message;
+
+            // Show the popup
+            popup.classList.add('show');
+
+            // Set timer to hide the popup after 2 seconds
+            statusTimer = setTimeout(() => {
+                popup.classList.remove('show');
+                statusTimer = null;
+            }, 2000);
+        }
 
         document.addEventListener('keydown', function (event) {
             if ((event.ctrlKey || event.metaKey) && event.key === 's') {
